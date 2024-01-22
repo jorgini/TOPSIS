@@ -7,84 +7,107 @@ import (
 	"reflect"
 )
 
-type Numbers float64
+type Number float64
 
-const NumbersMax Numbers = 2147483647
+const NumbersMax Number = 2147483647
 
-const NumbersMin Numbers = -2147483647
+const NumbersMin Number = -2147483647
 
-func (n Numbers) String() string {
+func (n Number) String() string {
 	return fmt.Sprintf("%.2f", float64(n))
 }
 
-func (n Numbers) ConvertToNumbers() Numbers {
+func (n Number) ConvertToNumbers() Number {
 	return n
 }
 
-func (n Numbers) ConvertToInterval() Interval {
+func (n Number) ConvertToInterval() Interval {
 	return Interval{n, n}
 }
 
-func (n Numbers) Weighted(weight Evaluated) Evaluated {
-	if reflect.TypeOf(weight) == reflect.TypeOf(Numbers(0)) {
+func (n Number) ConvertToT1FS(v Variants) *T1FS {
+	if v == Default || v == Triangle {
+		return NewT1FS(n, n, n)
+	} else {
+		return NewT1FS(n, n, n, n)
+	}
+}
+
+func (n Number) Weighted(weight Evaluated) Evaluated {
+	if reflect.TypeOf(weight) == reflect.TypeOf(Number(0)) || reflect.TypeOf(weight) == reflect.TypeOf(Interval{}) {
 		return n * weight.ConvertToNumbers()
-	} else if reflect.TypeOf(weight) == reflect.TypeOf(Interval{}) {
-		// придумать
 	}
 	return nil
 }
 
-func (n Numbers) DistanceTo(other Evaluated) (Numbers, error) {
+func (n Number) DistanceNumber(other Evaluated, v Variants) (Number, error) {
 	if reflect.TypeOf(other) != reflect.TypeOf(n) {
 		return 0, errors.New("incomparable values")
 	}
 
-	return (n - other.ConvertToNumbers()) * (n - other.ConvertToNumbers()), nil
-}
-
-func NormalizeNumbers(data []Numbers, v Variants) error {
-	if v == 1 {
-		sum := Numbers(0)
-
-		for i := range data {
-			sum += data[i] * data[i]
-		}
-
-		sum = Numbers(math.Sqrt(float64(sum)))
-
-		if sum == 0.0 {
-			return errors.New("can't normalize")
-		}
-
-		for i := range data {
-			data[i] /= sum
-		}
-	} else if v == 2 {
-		max := NumbersMin
-
-		for i := range data {
-			if max < data[i] {
-				max = data[i]
-			}
-		}
-
-		if max == 0.0 {
-			return errors.New("can't normalize")
-		}
-
-		for i := range data {
-			data[i] /= max
-		}
+	if v == SqrtDistance {
+		return (n - other.ConvertToNumbers()) * (n - other.ConvertToNumbers()), nil
+	} else if v == CbrtDistance {
+		return Number(math.Abs(math.Pow(float64(n-other.ConvertToNumbers()), 3))), nil
 	} else {
-		return errors.New("invalid type of normalization for numbers")
+		return 0, errors.New("incomplete case of distance")
 	}
-
-	return nil
 }
 
-func IdealRate(x, y Numbers, typeOfCriterion bool) Numbers {
-	if typeOfCriterion == Benefit {
-		return Numbers(math.Max(float64(x), float64(y)))
+func (n Number) DistanceInterval(other Interval, typeOfCriterion bool, v Variants) (Interval, error) {
+	return Interval{}, errors.New("not usage method")
+}
+
+func (n Number) Sum(other Evaluated) (Evaluated, error) {
+	if reflect.TypeOf(other) != reflect.TypeOf(n) {
+		return nil, errors.New("can't sum number and interval")
+	} else {
+		n += other.ConvertToNumbers()
+		return n, nil
 	}
-	return Numbers(math.Min(float64(x), float64(y)))
+}
+
+func positiveIdealRateNumber(x, y Evaluated, typeOfCriterion bool) Number {
+	a := NumbersMin
+	b := NumbersMin
+	if reflect.TypeOf(x) == reflect.TypeOf(Interval{}) {
+		tmp := x.ConvertToInterval()
+		if typeOfCriterion == Benefit {
+			a = tmp.End
+		} else {
+			a = tmp.Start
+		}
+	} else if reflect.TypeOf(x) == reflect.TypeOf(&T1FS{}) {
+		tmp := x.ConvertToT1FS(Default)
+		if typeOfCriterion == Benefit {
+			a = tmp.vert[len(tmp.vert)-1]
+		} else {
+			a = tmp.vert[0]
+		}
+	}
+
+	if reflect.TypeOf(y) == reflect.TypeOf(Interval{}) {
+		tmp := y.ConvertToInterval()
+		if typeOfCriterion == Benefit {
+			b = tmp.End
+		} else {
+			b = tmp.Start
+		}
+	} else if reflect.TypeOf(x) == reflect.TypeOf(&T1FS{}) {
+		tmp := y.ConvertToT1FS(Default)
+		if typeOfCriterion == Benefit {
+			b = tmp.vert[len(tmp.vert)-1]
+		} else {
+			b = tmp.vert[0]
+		}
+	}
+
+	if typeOfCriterion == Benefit {
+		return Number(math.Max(float64(a), float64(b)))
+	}
+	return Number(math.Min(float64(a), float64(b)))
+}
+
+func negativeIdealRateNumber(x, y Evaluated, typeOfCriterion bool) Number {
+	return positiveIdealRateNumber(x, y, !typeOfCriterion)
 }

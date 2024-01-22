@@ -15,11 +15,12 @@ type Matrix struct {
 	positiveIdeal       *Alternative
 	negativeIdeal       *Alternative
 	idealsFind          bool
-	distancesToPositive []Numbers
-	distancesToNegative []Numbers
+	distancesToPositive []Evaluated
+	distancesToNegative []Evaluated
 	distancesFind       bool
-	relativeCloseness   []Numbers
+	relativeCloseness   []Evaluated
 	closenessFind       bool
+	highType            reflect.Type
 }
 
 func (m *Matrix) String() string {
@@ -63,23 +64,35 @@ func (m *Matrix) String() string {
 
 func (m *Matrix) Result() string {
 	s := "Result:\n"
-	set := make([]int, m.countAlternatives)
+	set := make([]Evaluated, m.countAlternatives)
 	for i := 0; i < m.countAlternatives; i++ {
-		set[i] = i
+		set[i] = m.relativeCloseness[i]
 	}
 
 	for i := 0; i < m.countAlternatives; i++ {
 		s += fmt.Sprint(i+1) + ": "
-		max := 0.0
 		indMax := 0
-		for j := range set {
-			if m.relativeCloseness[set[j]] > Numbers(max) {
-				max = float64(m.relativeCloseness[set[j]])
-				indMax = set[j]
+		if reflect.TypeOf(set[i]) == reflect.TypeOf(NumbersMin) {
+			max := NumbersMin
+
+			for j := range set {
+				if set[j].ConvertToNumbers() > max {
+					max = set[j].ConvertToNumbers()
+					indMax = j
+				}
+			}
+		} else {
+			max := Interval{NumbersMin, NumbersMin}
+
+			for j := range set {
+				if set[j].ConvertToInterval().SenguptaGeq(max) {
+					max = set[j].ConvertToInterval()
+					indMax = j
+				}
 			}
 		}
 		s += m.data[indMax].String() + "\t" + m.relativeCloseness[indMax].String() + "\n"
-		set = append(set[:indMax], set[indMax+1:]...)
+		set[indMax] = NumbersMin
 	}
 	return s
 }
@@ -90,9 +103,9 @@ func NewMatrix(x, y int) *Matrix {
 		countAlternatives:   x,
 		countCriteria:       y,
 		criteria:            make([]Criterion, y),
-		distancesToNegative: make([]Numbers, x),
-		distancesToPositive: make([]Numbers, x),
-		relativeCloseness:   make([]Numbers, x),
+		distancesToNegative: make([]Evaluated, x),
+		distancesToPositive: make([]Evaluated, x),
+		relativeCloseness:   make([]Evaluated, x),
 	}
 
 	for i := range m.data {
@@ -120,40 +133,105 @@ func (m *Matrix) SetCriterion(weight Evaluated, typeOF bool, i int) error {
 	return nil
 }
 
-func TypingMatrices(matrices ...*Matrix) {
+func TypingMatrices(matrices ...*Matrix) (reflect.Type, error) {
 	hasInterval := false
+	hasT1FSTriangle := false
+	hasT1FSTrapezoid := false
+	x, y := matrices[0].countAlternatives, matrices[0].countCriteria
 
 	for k := range matrices {
+		if matrices[k].countAlternatives != x || matrices[k].countCriteria != y {
+			return nil, errors.New("incompatible sizes of matrices")
+		}
+
 		for i := range matrices[k].data {
-			for j := range matrices[k].data[i].grade {
-				if reflect.TypeOf(matrices[k].data[i].grade[j]) == reflect.TypeOf(Interval{}) {
+			if hasT1FSTrapezoid {
+				break
+			}
+
+			for _, eval := range matrices[k].data[i].grade {
+				if reflect.TypeOf(eval) == reflect.TypeOf(Interval{}) {
 					hasInterval = true
 				}
-			}
-		}
-	}
-
-	if hasInterval {
-		if matrices != nil {
-			for k := range matrices {
-				for i := range matrices[k].data {
-					for j := range matrices[k].data[i].grade {
-						matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToInterval()
+				if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) {
+					if eval.ConvertToT1FS(Default).form == Triangle {
+						hasT1FSTriangle = true
+					} else {
+						hasT1FSTrapezoid = true
+						break
 					}
 				}
 			}
 		}
 	}
-}
 
-func Aggregate(matrices []*Matrix, weights []Evaluated) {
-	TypingMatrices(matrices...)
+	ret := reflect.TypeOf(NumbersMin)
+	if hasT1FSTrapezoid || hasT1FSTriangle {
+		ret = reflect.TypeOf(&T1FS{})
+	} else if hasInterval {
+		ret = reflect.TypeOf(Interval{})
+	}
 
 	for k := range matrices {
 		for i := range matrices[k].data {
 			for j := range matrices[k].data[i].grade {
-				matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].Weighted(weights[k])
+				if hasT1FSTrapezoid {
+					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToT1FS(Trapezoid)
+				} else if hasT1FSTriangle {
+					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToT1FS(Triangle)
+				} else if hasInterval {
+					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToInterval()
+				}
 			}
 		}
+	}
+
+	return ret, nil
+}
+
+func Aggregate(matrices []*Matrix, weights []Evaluated, mode Variants) (*Matrix, error) {
+	if mode == AggregateRatings {
+		result := NewMatrix(matrices[0].countAlternatives, matrices[0].countCriteria)
+		if highType, err := TypingMatrices(matrices...); err != nil {
+			return nil, errors.Join(err)
+		} else {
+			result.highType = highType
+		}
+
+		for k := range matrices {
+			for i := range matrices[k].data {
+				for j, eval := range matrices[k].data[i].grade {
+					if result.data[i].grade[j] == nil {
+						result.data[i].grade[j] = eval.Weighted(weights[k])
+					} else {
+						if ret, err := result.data[i].grade[j].Sum(eval.Weighted(weights[k])); err != nil {
+							return nil, errors.Join(err)
+						} else {
+							result.data[i].grade[j] = ret
+						}
+					}
+				}
+			}
+		}
+		return result, nil
+	} else if mode == AggregateDistances {
+		x := matrices[0].countAlternatives
+		result := NewMatrix(matrices[0].countAlternatives, matrices[0].countCriteria)
+		for k := range matrices {
+			if x != matrices[k].countAlternatives {
+				return nil, errors.New("incompatible sizes of matrices")
+			}
+
+			for i, dist := range matrices[k].distancesToPositive {
+				if tmp, err := result.distancesToPositive[i].Sum(dist.Weighted(weights[k]).ConvertToNumbers()); err != nil {
+					return nil, errors.Join(err)
+				} else {
+					result.distancesToPositive[i] = tmp
+				}
+			}
+		}
+		return result, nil
+	} else {
+		return nil, errors.New("incomplete mode of aggregating")
 	}
 }
