@@ -1,8 +1,9 @@
-package matrix
+package lib
 
 import (
 	"errors"
 	"math"
+	"reflect"
 )
 
 type Alternative struct {
@@ -11,22 +12,22 @@ type Alternative struct {
 }
 
 func (a *Alternative) String() string {
-	s := ""
+	s := "[ "
 	for i := 0; i < a.countOfCriteria; i++ {
 		s += a.grade[i].String() + " "
 	}
-	return s
+	return s + " ]"
 }
 
-func (a *Alternative) FindDistanceNumber(to *Alternative, v Variants) (Number, error) {
+func (a *Alternative) NumberMetric(to *Alternative, v Variants) (Number, error) {
 	if a.countOfCriteria != to.countOfCriteria {
-		return 0, errors.New("incomparable alternatives")
+		return 0, InvalidSize
 	}
 
 	result := Number(0)
 
 	for i := 0; i < a.countOfCriteria; i++ {
-		if tmp, err := a.grade[i].DistanceNumber(to.grade[i].ConvertToNumbers(), v); err != nil {
+		if tmp, err := a.grade[i].DiffNumber(to.grade[i].ConvertToNumber(), v); err != nil {
 			return 0, errors.Join(err)
 		} else {
 			result += tmp
@@ -42,10 +43,10 @@ func (a *Alternative) FindDistanceNumber(to *Alternative, v Variants) (Number, e
 	return result, nil
 }
 
-func (a *Alternative) FindDistanceInterval(to *Alternative, criteria []Criterion,
+func (a *Alternative) IntervalMetric(to *Alternative, criteria []Criterion,
 	idealType bool, v Variants) (Interval, error) {
 	if a.countOfCriteria != to.countOfCriteria {
-		return Interval{}, errors.New("incomparable alternatives")
+		return Interval{}, InvalidSize
 	}
 
 	var result Evaluated
@@ -58,12 +59,10 @@ func (a *Alternative) FindDistanceInterval(to *Alternative, criteria []Criterion
 		} else {
 			typeOfCriterion = !c.typeOfCriteria
 		}
-		if tmp, err := a.grade[i].DistanceInterval(to.grade[i].ConvertToInterval(), typeOfCriterion, v); err != nil {
+		if tmp, err := a.grade[i].DiffInterval(to.grade[i].ConvertToInterval(), typeOfCriterion, v); err != nil {
 			return Interval{}, errors.Join(err)
 		} else {
-			if result, err = result.Sum(tmp); err != nil {
-				return Interval{}, errors.Join(err)
-			}
+			result = result.Sum(tmp)
 		}
 	}
 
@@ -78,15 +77,15 @@ func (a *Alternative) FindDistanceInterval(to *Alternative, criteria []Criterion
 	return result.ConvertToInterval(), nil
 }
 
-func (a *Alternative) FindDistanceT1FS(to *Alternative, v Variants) (Number, error) {
+func (a *Alternative) FSMetric(to *Alternative, v Variants) (Number, error) {
 	if a.countOfCriteria != to.countOfCriteria {
-		return 0, errors.New("incomparable alternatives")
+		return 0, InvalidSize
 	}
 
 	result := Number(0)
 
 	for i := 0; i < a.countOfCriteria; i++ {
-		if tmp, err := a.grade[i].DistanceNumber(to.grade[i].ConvertToT1FS(Default), v); err != nil {
+		if tmp, err := a.grade[i].DiffNumber(to.grade[i], v); err != nil {
 			return 0, errors.Join(err)
 		} else {
 			result += tmp
@@ -100,4 +99,21 @@ func (a *Alternative) FindDistanceT1FS(to *Alternative, v Variants) (Number, err
 	}
 
 	return result, nil
+}
+
+func (a *Alternative) Sum() Evaluated {
+	var sum Evaluated
+
+	if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(NumbersMin) {
+		sum = Number(0.0)
+	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(Interval{}) {
+		sum = Interval{0.0, 0.0}
+	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(&T1FS{}) {
+		sum = NewT1FS(0.0, 0.0, 0.0)
+	}
+
+	for _, el := range a.grade {
+		sum = sum.Sum(el)
+	}
+	return sum
 }

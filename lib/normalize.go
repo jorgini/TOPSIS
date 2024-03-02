@@ -1,4 +1,4 @@
-package matrix
+package lib
 
 import (
 	"errors"
@@ -6,15 +6,51 @@ import (
 	"reflect"
 )
 
+func GetBestValueWithCond(a, b Evaluated, typeOfCriterion bool) Number {
+	val := []Evaluated{a, b}
+
+	for i := range val {
+		if reflect.TypeOf(val[i]) == reflect.TypeOf(Interval{}) {
+			if typeOfCriterion == Benefit {
+				val[i] = val[i].ConvertToInterval().End
+			} else {
+				val[i] = val[i].ConvertToInterval().Start
+			}
+		}
+
+		if reflect.TypeOf(val[i]) == reflect.TypeOf(&T1FS{}) {
+			if typeOfCriterion == Benefit {
+				val[i] = val[i].ConvertToT1FS(Default).vert[len(val[i].ConvertToT1FS(Default).vert)-1]
+			} else {
+				val[i] = val[i].ConvertToT1FS(Default).vert[0]
+			}
+		}
+
+		if reflect.TypeOf(val[i]) == reflect.TypeOf(&IT2FS{}) {
+			if typeOfCriterion == Benefit {
+				val[i] = val[i].ConvertToIT2FS(Default).bottom[1].End
+			} else {
+				val[i] = val[i].ConvertToIT2FS(Default).bottom[0].Start
+			}
+		}
+	}
+
+	if typeOfCriterion == Benefit {
+		return Number(math.Max(float64(val[0].ConvertToNumber()), float64(val[1].ConvertToNumber())))
+	} else {
+		return Number(math.Min(float64(val[0].ConvertToNumber()), float64(val[1].ConvertToNumber())))
+	}
+}
+
 func (m *Matrix) normalizationValue(v Variants) error {
 	if v == NormalizeWithSum {
 		for j := range m.criteria {
-			sum := Number(0)
+			sum := Number(0.0)
 			for i := range m.data {
 				eval := m.data[i].grade[j]
 
 				if reflect.TypeOf(eval) == reflect.TypeOf(NumbersMax) {
-					sum += eval.ConvertToNumbers() * eval.ConvertToNumbers()
+					sum += eval.ConvertToNumber() * eval.ConvertToNumber()
 				} else if reflect.TypeOf(eval) == reflect.TypeOf(Interval{}) {
 					sum += eval.ConvertToInterval().Start*eval.ConvertToInterval().Start +
 						eval.ConvertToInterval().End*eval.ConvertToInterval().End
@@ -27,7 +63,7 @@ func (m *Matrix) normalizationValue(v Variants) error {
 			sum = Number(math.Sqrt(float64(sum)))
 
 			if sum == 0.0 {
-				return errors.New("empty values in alternative")
+				return EmptyValues
 			}
 
 			for i := range m.data {
@@ -44,33 +80,34 @@ func (m *Matrix) normalizationValue(v Variants) error {
 
 				if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) {
 					if criterion.typeOfCriteria == Benefit {
-						maximum = positiveIdealRateNumber(maximum, eval, criterion.typeOfCriteria)
+						maximum = GetBestValueWithCond(maximum, eval, criterion.typeOfCriteria)
 					} else {
-						minimum = positiveIdealRateNumber(minimum, eval, criterion.typeOfCriteria)
+						minimum = GetBestValueWithCond(minimum, eval, criterion.typeOfCriteria)
 					}
 				} else {
-					maximum = positiveIdealRateNumber(maximum, eval, Benefit)
+					maximum = GetBestValueWithCond(maximum, eval, criterion.typeOfCriteria)
 				}
 			}
 
-			if maximum.ConvertToNumbers() == 0.0 {
-				return errors.New("empty values in alternative")
+			if maximum.ConvertToNumber() == 0.0 {
+				return EmptyValues
 			}
 
 			for i := range m.data {
 				if reflect.TypeOf(m.data[i].grade[j]) == reflect.TypeOf(&T1FS{}) && criterion.typeOfCriteria == Cost {
-					vertices := m.data[i].grade[j].ConvertToT1FS(Default).vert
+					vertices := make([]Number, len(m.data[i].grade[j].ConvertToT1FS(Default).vert))
 
-					for j := range vertices {
-						vertices[j] = minimum / vertices[len(vertices)-j-1]
+					for k := range vertices {
+						vertices[k] = minimum / m.data[i].grade[j].ConvertToT1FS(Default).vert[len(vertices)-k-1]
 					}
+					m.data[i].grade[j].ConvertToT1FS(Default).vert = vertices
 				} else {
 					m.data[i].grade[j] = m.data[i].grade[j].Weighted(1 / maximum)
 				}
 			}
 		}
 	} else {
-		return errors.New("incomplete case of normalization")
+		return InvalidCaseOfOperation
 	}
 	return nil
 }
@@ -79,15 +116,16 @@ func (m *Matrix) normalizationWeights(w Variants) error {
 	highSum := Number(0.0)
 	lowerSum := Number(0.0)
 	for _, c := range m.criteria {
-		highSum += c.weight.ConvertToNumbers()
 		if reflect.TypeOf(c.weight) == reflect.TypeOf(Interval{}) && w != NormalizeWeightsByMidPoint {
 			highSum += c.weight.ConvertToInterval().End
 			lowerSum += c.weight.ConvertToInterval().Start
+		} else {
+			highSum += c.weight.ConvertToNumber()
 		}
 	}
 
 	if highSum == 0 {
-		return errors.New("can't normalize weights")
+		return EmptyValues
 	}
 
 	for j, c := range m.criteria {
@@ -112,4 +150,12 @@ func (m *Matrix) Normalization(v Variants, w Variants) error {
 	}
 
 	return nil
+}
+
+func (m *Matrix) CalcWeightedMatrix() {
+	for j := 0; j < m.countCriteria; j++ {
+		for i := 0; i < m.countAlternatives; i++ {
+			m.data[i].grade[j] = m.data[i].grade[j].Weighted(m.criteria[j].weight)
+		}
+	}
 }
