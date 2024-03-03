@@ -74,7 +74,12 @@ func (t *IT2FS) ConvertToInterval() Interval {
 	return t.decompose
 }
 
-func (t *IT2FS) ConvertToT1FS(v Variants) *T1FS {
+func (t *IT2FS) ConvertToT1FS(f Variants) *T1FS {
+	fmt.Println("Call deprecated method")
+	return nil
+}
+
+func (t *IT2FS) ConvertToAIFS(f Variants) *AIFS {
 	fmt.Println("Call deprecated method")
 	return nil
 }

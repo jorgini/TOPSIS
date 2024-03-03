@@ -109,7 +109,23 @@ func (a *Alternative) Sum() Evaluated {
 	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(Interval{}) {
 		sum = Interval{0.0, 0.0}
 	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(&T1FS{}) {
-		sum = NewT1FS(0.0, 0.0, 0.0)
+		if a.grade[0].ConvertToT1FS(Default).form == Triangle {
+			sum = NewT1FS(0.0, 0.0, 0.0)
+		} else {
+			sum = NewT1FS(0.0, 0.0, 0.0, 0.0)
+		}
+	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(&AIFS{}) {
+		if a.grade[0].ConvertToAIFS(Default).form == Triangle {
+			sum = NewAIFS(0.0, 0.0, 0.0, 0.0)
+		} else {
+			sum = NewAIFS(0.0, 0.0, 0.0, 0.0, 0.0)
+		}
+	} else if reflect.TypeOf(a.grade[0]) == reflect.TypeOf(&IT2FS{}) {
+		if a.grade[0].ConvertToIT2FS(Default).form == Triangle {
+			sum = NewIT2FS([]Interval{{0.0, 0.0}, {0.0, 0.0}}, []Number{0.0})
+		} else {
+			sum = NewIT2FS([]Interval{{0.0, 0.0}, {0.0, 0.0}}, []Number{0.0, 0.0})
+		}
 	}
 
 	for _, el := range a.grade {

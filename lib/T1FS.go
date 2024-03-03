@@ -67,7 +67,7 @@ func (t *T1FS) ConvertToInterval() Interval {
 }
 
 func (t *T1FS) ConvertToT1FS(v Variants) *T1FS {
-	if (v == Triangle && t.form == Triangle) || (v == Trapezoid && t.form == Trapezoid) || v == Default {
+	if v == t.form || v == Default {
 		return t
 	} else if v == Triangle && t.form == Trapezoid {
 		return NewT1FS(t.vert[0], (t.vert[1]+t.vert[2])/2, t.vert[3])
@@ -76,10 +76,23 @@ func (t *T1FS) ConvertToT1FS(v Variants) *T1FS {
 	}
 }
 
+func (t *T1FS) ConvertToAIFS(f Variants) *AIFS {
+	if f == t.form || f == Default {
+		return NewAIFS(0.0, t.vert...)
+	} else if f == Triangle && t.form == Trapezoid {
+		return NewAIFS(0.0, t.vert[0], (t.vert[1]+t.vert[2])/2, t.vert[3])
+	} else {
+		return NewAIFS(0.0, t.vert[0], t.vert[1], t.vert[1], t.vert[2])
+	}
+}
+
 func (t *T1FS) ConvertToIT2FS(v Variants) *IT2FS {
-	if (v == Triangle && t.form == Triangle) || (v == Trapezoid && t.form == Trapezoid) || v == Default {
+	if (v == t.form || v == Default) && t.form == Triangle {
 		return NewIT2FS([]Interval{{t.vert[0], t.vert[0]}, {t.vert[2], t.vert[2]}},
 			[]Number{t.vert[1]})
+	} else if (v == t.form || v == Default) && t.form == Trapezoid {
+		return NewIT2FS([]Interval{{t.vert[0], t.vert[0]}, {t.vert[3], t.vert[3]}},
+			[]Number{t.vert[1], t.vert[2]})
 	} else if v == Triangle && t.form == Trapezoid {
 		return NewIT2FS([]Interval{{t.vert[0], t.vert[0]}, {t.vert[3], t.vert[3]}},
 			[]Number{(t.vert[1] + t.vert[2]) / 2})
@@ -174,43 +187,29 @@ func positiveIdealRateT1FS(alts []Alternative, criteria []Criterion, form Varian
 					positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
 				}
 			} else {
+				positiveGrade := positive.grade[i].ConvertToT1FS(Default)
+				altsGrade := alts[j].grade[i].ConvertToIT2FS(Default)
+
 				if c.typeOfCriteria == Benefit {
-					positive.grade[i].ConvertToT1FS(Default).vert[0] =
-						Max(positive.grade[i].ConvertToT1FS(Default).vert[0],
-							alts[j].grade[i].ConvertToIT2FS(Default).bottom[0].End).ConvertToNumber()
-					positive.grade[i].ConvertToT1FS(Default).vert[1] =
-						Max(positive.grade[i].ConvertToT1FS(Default).vert[1],
-							alts[j].grade[i].ConvertToIT2FS(Default).upward[0]).ConvertToNumber()
+					positiveGrade.vert[0] =
+						Max(positiveGrade.vert[0], altsGrade.bottom[0].End).ConvertToNumber()
+					positiveGrade.vert[1] =
+						Max(positiveGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
 					if form == Triangle {
-						positive.grade[i].ConvertToT1FS(Default).vert[2] =
-							Max(positive.grade[i].ConvertToT1FS(Default).vert[2],
-								alts[j].grade[i].ConvertToIT2FS(Default).bottom[1].End).ConvertToNumber()
+						positiveGrade.vert[2] =
+							Max(positiveGrade.vert[2], altsGrade.bottom[1].End).ConvertToNumber()
 					} else {
-						positive.grade[i].ConvertToT1FS(Default).vert[2] =
-							Max(positive.grade[i].ConvertToT1FS(Default).vert[2],
-								alts[j].grade[i].ConvertToIT2FS(Default).upward[1]).ConvertToNumber()
-						positive.grade[i].ConvertToT1FS(Default).vert[3] =
-							Max(positive.grade[i].ConvertToT1FS(Default).vert[3],
-								alts[j].grade[i].ConvertToIT2FS(Default).bottom[1].End).ConvertToNumber()
+						positiveGrade.vert[2] = Max(positiveGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
+						positiveGrade.vert[3] = Max(positiveGrade.vert[3], altsGrade.bottom[1].End).ConvertToNumber()
 					}
 				} else {
-					positive.grade[i].ConvertToT1FS(Default).vert[0] =
-						Min(positive.grade[i].ConvertToT1FS(Default).vert[0],
-							alts[j].grade[i].ConvertToIT2FS(Default).bottom[0].Start).ConvertToNumber()
-					positive.grade[i].ConvertToT1FS(Default).vert[1] =
-						Min(positive.grade[i].ConvertToT1FS(Default).vert[1],
-							alts[j].grade[i].ConvertToIT2FS(Default).upward[0]).ConvertToNumber()
+					positiveGrade.vert[0] = Min(positiveGrade.vert[0], altsGrade.bottom[0].Start).ConvertToNumber()
+					positiveGrade.vert[1] = Min(positiveGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
 					if form == Triangle {
-						positive.grade[i].ConvertToT1FS(Default).vert[2] =
-							Min(positive.grade[i].ConvertToT1FS(Default).vert[2],
-								alts[j].grade[i].ConvertToIT2FS(Default).bottom[1].Start).ConvertToNumber()
+						positiveGrade.vert[2] = Min(positiveGrade.vert[2], altsGrade.bottom[1].Start).ConvertToNumber()
 					} else {
-						positive.grade[i].ConvertToT1FS(Default).vert[2] =
-							Min(positive.grade[i].ConvertToT1FS(Default).vert[2],
-								alts[j].grade[i].ConvertToIT2FS(Default).upward[1]).ConvertToNumber()
-						positive.grade[i].ConvertToT1FS(Default).vert[3] =
-							Min(positive.grade[i].ConvertToT1FS(Default).vert[3],
-								alts[j].grade[i].ConvertToIT2FS(Default).bottom[1].Start).ConvertToNumber()
+						positiveGrade.vert[2] = Min(positiveGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
+						positiveGrade.vert[3] = Min(positiveGrade.vert[3], altsGrade.bottom[1].Start).ConvertToNumber()
 					}
 				}
 			}

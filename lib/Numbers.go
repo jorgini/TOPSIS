@@ -24,11 +24,19 @@ func (n Number) ConvertToInterval() Interval {
 	return Interval{n, n}
 }
 
-func (n Number) ConvertToT1FS(v Variants) *T1FS {
-	if v == Default || v == Triangle {
+func (n Number) ConvertToT1FS(f Variants) *T1FS {
+	if f == Default || f == Triangle {
 		return NewT1FS(n, n, n)
 	} else {
 		return NewT1FS(n, n, n, n)
+	}
+}
+
+func (n Number) ConvertToAIFS(f Variants) *AIFS {
+	if f == Default || f == Triangle {
+		return NewAIFS(0.0, n, n, n)
+	} else {
+		return NewAIFS(0.0, n, n, n, n)
 	}
 }
 

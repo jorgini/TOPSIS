@@ -95,6 +95,7 @@ func (m *Matrix) SetTypeAndForm(t reflect.Type, f Variants) {
 func TypingMatrices(matrices ...*Matrix) (reflect.Type, Variants, error) {
 	hasInterval := false
 	hasT1FS := false
+	hasAIFS := false
 	hasIT2FS := false
 	hasTriangle := false
 	hasTrapezoid := false
@@ -123,9 +124,18 @@ func TypingMatrices(matrices ...*Matrix) (reflect.Type, Variants, error) {
 						break
 					}
 				}
+				if reflect.TypeOf(eval) == reflect.TypeOf(&AIFS{}) {
+					hasAIFS = true
+					if eval.ConvertToAIFS(Default).form == Triangle {
+						hasTriangle = true
+					} else {
+						hasTrapezoid = true
+						break
+					}
+				}
 				if reflect.TypeOf(eval) == reflect.TypeOf(&IT2FS{}) {
 					hasIT2FS = true
-					if eval.ConvertToT1FS(Default).form == Triangle {
+					if eval.ConvertToIT2FS(Default).form == Triangle {
 						hasTriangle = true
 					} else {
 						hasTrapezoid = true
@@ -139,6 +149,8 @@ func TypingMatrices(matrices ...*Matrix) (reflect.Type, Variants, error) {
 	ret := reflect.TypeOf(NumbersMin)
 	if hasIT2FS {
 		ret = reflect.TypeOf(&IT2FS{})
+	} else if hasAIFS {
+		ret = reflect.TypeOf(&AIFS{})
 	} else if hasT1FS {
 		ret = reflect.TypeOf(&T1FS{})
 	} else if hasInterval {
@@ -159,6 +171,10 @@ func TypingMatrices(matrices ...*Matrix) (reflect.Type, Variants, error) {
 					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToIT2FS(Trapezoid)
 				} else if hasIT2FS && hasTriangle {
 					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToIT2FS(Triangle)
+				} else if hasAIFS && hasTrapezoid {
+					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToAIFS(Trapezoid)
+				} else if hasAIFS && hasTriangle {
+					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToAIFS(Triangle)
 				} else if hasT1FS && hasTrapezoid {
 					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToT1FS(Trapezoid)
 				} else if hasT1FS && hasTriangle {

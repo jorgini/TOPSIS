@@ -37,6 +37,13 @@ func (tm *TopsisMatrix) FindIdeals(v Variants) error {
 		if err != nil {
 			return err
 		}
+	} else if reflect.TypeOf(tm.data[0].grade[0]) == reflect.TypeOf(&AIFS{}) {
+		tm.positiveIdeal, err = positiveIdealRateAIFS(tm.data, tm.criteria)
+		tm.negativeIdeal, err = negativeIdealRateAIFS(tm.data, tm.criteria)
+
+		if err != nil {
+			return err
+		}
 	} else {
 		tm.positiveIdeal, err = positiveIdealRateNumber(tm.data, tm.criteria)
 		tm.negativeIdeal, err = negativeIdealRateNumber(tm.data, tm.criteria)
@@ -53,7 +60,8 @@ func (tm *TopsisMatrix) FindIdeals(v Variants) error {
 func (tm *TopsisMatrix) FindDistanceToIdeals(vt, vi, vn Variants) error {
 	for i := 0; i < tm.countAlternatives; i++ {
 		var err error
-		if (tm.highType != reflect.TypeOf(&T1FS{}) && tm.highType != reflect.TypeOf(&IT2FS{})) || vt == AlphaSlices {
+		if (tm.highType != reflect.TypeOf(&T1FS{}) && tm.highType != reflect.TypeOf(&IT2FS{}) &&
+			tm.highType != reflect.TypeOf(&AIFS{})) || vt == AlphaSlices {
 			if vi == Default {
 				if tm.distancesToPositive[i], err = tm.data[i].NumberMetric(tm.positiveIdeal, vn); err != nil {
 					return errors.Join(err)

@@ -26,6 +26,14 @@ func GetBestValueWithCond(a, b Evaluated, typeOfCriterion bool) Number {
 			}
 		}
 
+		if reflect.TypeOf(val[i]) == reflect.TypeOf(&AIFS{}) {
+			if typeOfCriterion == Benefit {
+				val[i] = val[i].ConvertToAIFS(Default).vert[len(val[i].ConvertToAIFS(Default).vert)-1]
+			} else {
+				val[i] = val[i].ConvertToAIFS(Default).vert[0]
+			}
+		}
+
 		if reflect.TypeOf(val[i]) == reflect.TypeOf(&IT2FS{}) {
 			if typeOfCriterion == Benefit {
 				val[i] = val[i].ConvertToIT2FS(Default).bottom[1].End
@@ -57,6 +65,12 @@ func (m *Matrix) normalizationValue(v Variants) error {
 				} else if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) {
 					tmp := eval.ConvertToT1FS(Default)
 					sum += tmp.vert[0]*tmp.vert[0] + tmp.vert[len(tmp.vert)-1]*tmp.vert[len(tmp.vert)-1]
+				} else if reflect.TypeOf(eval) == reflect.TypeOf(&AIFS{}) {
+					tmp := eval.ConvertToAIFS(Default)
+					sum += tmp.vert[0]*tmp.vert[0] + tmp.vert[len(tmp.vert)-1]*tmp.vert[len(tmp.vert)-1]
+				} else if reflect.TypeOf(eval) == reflect.TypeOf(&IT2FS{}) {
+					tmp := eval.ConvertToIT2FS(Default)
+					sum += tmp.bottom[0].Start*tmp.bottom[0].Start + tmp.bottom[1].End*tmp.bottom[1].End
 				}
 			}
 
@@ -78,7 +92,9 @@ func (m *Matrix) normalizationValue(v Variants) error {
 			for i := range m.data {
 				eval := m.data[i].grade[j]
 
-				if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) {
+				if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) ||
+					reflect.TypeOf(eval) == reflect.TypeOf(&AIFS{}) ||
+					reflect.TypeOf(eval) == reflect.TypeOf(&IT2FS{}) {
 					if criterion.typeOfCriteria == Benefit {
 						maximum = GetBestValueWithCond(maximum, eval, criterion.typeOfCriteria)
 					} else {
@@ -101,6 +117,27 @@ func (m *Matrix) normalizationValue(v Variants) error {
 						vertices[k] = minimum / m.data[i].grade[j].ConvertToT1FS(Default).vert[len(vertices)-k-1]
 					}
 					m.data[i].grade[j].ConvertToT1FS(Default).vert = vertices
+				} else if reflect.TypeOf(m.data[i].grade[j]) == reflect.TypeOf(&AIFS{}) && criterion.typeOfCriteria == Cost {
+					vertices := make([]Number, len(m.data[i].grade[j].ConvertToAIFS(Default).vert))
+
+					for k := range vertices {
+						vertices[k] = minimum / m.data[i].grade[j].ConvertToAIFS(Default).vert[len(vertices)-k-1]
+					}
+					m.data[i].grade[j].ConvertToAIFS(Default).vert = vertices
+				} else if reflect.TypeOf(m.data[i].grade[j]) == reflect.TypeOf(&IT2FS{}) && criterion.typeOfCriteria == Cost {
+					grade := m.data[i].grade[j].ConvertToIT2FS(Default)
+					bottom := []Interval{{minimum / grade.bottom[1].End, minimum / grade.bottom[1].Start},
+						{minimum / grade.bottom[0].End, minimum / grade.bottom[0].Start}}
+
+					var upward []Number
+					if grade.form == Triangle {
+						upward = []Number{minimum / grade.upward[0]}
+					} else {
+						upward = []Number{minimum / grade.upward[1], minimum / grade.upward[0]}
+					}
+
+					grade.bottom = bottom
+					grade.upward = upward
 				} else {
 					m.data[i].grade[j] = m.data[i].grade[j].Weighted(1 / maximum)
 				}
