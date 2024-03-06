@@ -1,10 +1,12 @@
 package lib
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
 	"reflect"
+	"sync"
 )
 
 type AIFS struct {
@@ -97,6 +99,10 @@ func (a *AIFS) ConvertToIT2FS(f Variants) *IT2FS {
 	}
 }
 
+func (a *AIFS) GetForm() Variants {
+	return a.form
+}
+
 func (a *AIFS) Weighted(weight Evaluated) Evaluated {
 	wt := NewAIFS(a.pi, a.vert...)
 	for i := range a.vert {
@@ -160,28 +166,46 @@ func (a *AIFS) Sum(other Evaluated) Evaluated {
 }
 
 func positiveIdealRateAIFS(alts []Alternative, criteria []Criterion) (*Alternative, error) {
+	var wg sync.WaitGroup
+	var err error = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	positive := &Alternative{make([]Evaluated, len(alts[0].grade)), len(criteria)}
 
+	wg.Add(len(criteria))
 	for i, c := range criteria {
-		for j := range alts {
-			if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&AIFS{}) {
-				return nil, IncompatibleTypes
-			}
+		go func(i int, c Criterion) {
+			defer wg.Done()
 
-			altsGrade := alts[j].grade[i].ConvertToAIFS(Default)
+			for j := range alts {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&AIFS{}) {
+						cancel()
+						err = IncompatibleTypes
+						return
+					}
 
-			if positive.grade[i] == nil {
-				positive.grade[i] = NewAIFS(altsGrade.pi, altsGrade.vert...)
-			}
+					altsGrade := alts[j].grade[i].ConvertToAIFS(Default)
 
-			if c.typeOfCriteria == Benefit {
-				positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
-			} else {
-				positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+					if positive.grade[i] == nil {
+						positive.grade[i] = NewAIFS(altsGrade.pi, altsGrade.vert...)
+					}
+
+					if c.typeOfCriteria == Benefit {
+						positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
+					} else {
+						positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+					}
+				}
 			}
-		}
+		}(i, c)
 	}
-	return positive, nil
+
+	wg.Wait()
+	return positive, err
 }
 
 func negativeIdealRateAIFS(alts []Alternative, criteria []Criterion) (*Alternative, error) {

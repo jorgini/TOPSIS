@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"reflect"
 )
 
 const (
@@ -37,4 +38,13 @@ func ChangeTypes(criteria []Criterion) []Criterion {
 		newCriteria[i] = Criterion{criteria[i].weight, !criteria[i].typeOfCriteria}
 	}
 	return newCriteria
+}
+
+func GetHighType(criteria []Criterion) reflect.Type {
+	highType := reflect.TypeOf(NumbersMin)
+
+	for _, c := range criteria {
+		highType = HighType(highType, reflect.TypeOf(c.weight))
+	}
+	return highType
 }

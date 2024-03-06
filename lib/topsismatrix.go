@@ -116,12 +116,24 @@ func ConvertToTopsisMatrix(m *Matrix) *TopsisMatrix {
 func AggregateDistances(matrices []*TopsisMatrix, weights []Evaluated) (*TopsisMatrix, error) {
 	x := matrices[0].countAlternatives
 	result := NewTopsisMatrix(matrices[0].countAlternatives, matrices[0].countCriteria)
+
 	for k := range matrices {
 		if x != matrices[k].countAlternatives {
 			return nil, InvalidSize
 		}
 		for i, dist := range matrices[k].distancesToPositive {
+			if k == 0 {
+				result.distancesToPositive[i] = dist.Weighted(weights[k])
+				continue
+			}
 			result.distancesToPositive[i] = result.distancesToPositive[i].Sum(dist.Weighted(weights[k]))
+		}
+		for i, dist := range matrices[k].distancesToNegative {
+			if k == 0 {
+				result.distancesToNegative[i] = dist.Weighted(weights[k])
+				continue
+			}
+			result.distancesToNegative[i] = result.distancesToNegative[i].Sum(dist.Weighted(weights[k]))
 		}
 	}
 	return result, nil

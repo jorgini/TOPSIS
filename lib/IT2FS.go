@@ -94,6 +94,10 @@ func (t *IT2FS) ConvertToIT2FS(v Variants) *IT2FS {
 	}
 }
 
+func (t *IT2FS) GetForm() Variants {
+	return t.form
+}
+
 func (t *IT2FS) Weighted(weight Evaluated) Evaluated {
 	wt := NewIT2FS(t.bottom, t.upward)
 	for i := range t.bottom {

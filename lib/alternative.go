@@ -1,9 +1,10 @@
 package lib
 
 import (
-	"errors"
+	"context"
 	"math"
 	"reflect"
+	"sync"
 )
 
 type Alternative struct {
@@ -24,14 +25,37 @@ func (a *Alternative) NumberMetric(to *Alternative, v Variants) (Number, error) 
 		return 0, InvalidSize
 	}
 
-	result := Number(0)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var err error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	result := Number(0)
+	wg.Add(a.countOfCriteria)
 	for i := 0; i < a.countOfCriteria; i++ {
-		if tmp, err := a.grade[i].DiffNumber(to.grade[i].ConvertToNumber(), v); err != nil {
-			return 0, errors.Join(err)
-		} else {
-			result += tmp
-		}
+		go func(i int) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if tmp, innerError := a.grade[i].DiffNumber(to.grade[i].ConvertToNumber(), v); innerError != nil {
+					err = innerError
+					cancel()
+					return
+				} else {
+					mu.Lock()
+					result += tmp
+					mu.Unlock()
+				}
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	if err != nil {
+		return 0, err
 	}
 
 	if v == SqrtDistance {
@@ -43,27 +67,43 @@ func (a *Alternative) NumberMetric(to *Alternative, v Variants) (Number, error) 
 	return result, nil
 }
 
-func (a *Alternative) IntervalMetric(to *Alternative, criteria []Criterion,
-	idealType bool, v Variants) (Interval, error) {
+func (a *Alternative) IntervalMetric(to *Alternative, criteria []Criterion, v Variants) (Interval, error) {
 	if a.countOfCriteria != to.countOfCriteria {
 		return Interval{}, InvalidSize
 	}
 
-	var result Evaluated
-	result = Interval{Number(0), Number(0)}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var err error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	result := Interval{Number(0), Number(0)}
+	wg.Add(len(criteria))
 	for i, c := range criteria {
-		var typeOfCriterion bool
-		if idealType == Positive {
-			typeOfCriterion = c.typeOfCriteria
-		} else {
-			typeOfCriterion = !c.typeOfCriteria
-		}
-		if tmp, err := a.grade[i].DiffInterval(to.grade[i].ConvertToInterval(), typeOfCriterion, v); err != nil {
-			return Interval{}, errors.Join(err)
-		} else {
-			result = result.Sum(tmp)
-		}
+		go func(i int, c Criterion) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if tmp, innerError := a.grade[i].DiffInterval(to.grade[i].ConvertToInterval(), c.typeOfCriteria, v); innerError != nil {
+					err = innerError
+					cancel()
+					return
+				} else {
+					mu.Lock()
+					result = result.Sum(tmp).ConvertToInterval()
+					mu.Unlock()
+				}
+			}
+		}(i, c)
+	}
+
+	wg.Wait()
+
+	if err != nil {
+		return Interval{}, err
 	}
 
 	if v == SqrtDistance {
@@ -82,14 +122,38 @@ func (a *Alternative) FSMetric(to *Alternative, v Variants) (Number, error) {
 		return 0, InvalidSize
 	}
 
-	result := Number(0)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var err error
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	result := Number(0)
+	wg.Add(a.countOfCriteria)
 	for i := 0; i < a.countOfCriteria; i++ {
-		if tmp, err := a.grade[i].DiffNumber(to.grade[i], v); err != nil {
-			return 0, errors.Join(err)
-		} else {
-			result += tmp
-		}
+		go func(i int) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if tmp, innerError := a.grade[i].DiffNumber(to.grade[i], v); innerError != nil {
+					err = innerError
+					cancel()
+					return
+				} else {
+					mu.Lock()
+					result += tmp
+					mu.Unlock()
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	if err != nil {
+		return 0, err
 	}
 
 	if v == SqrtDistance {

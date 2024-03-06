@@ -1,8 +1,10 @@
 package lib
 
 import (
+	"context"
 	"errors"
 	"reflect"
+	"sync"
 )
 
 var (
@@ -31,6 +33,8 @@ func NewMatrix(x, y int) *Matrix {
 		countAlternatives: x,
 		countCriteria:     y,
 		criteria:          make([]Criterion, y),
+		highType:          reflect.TypeOf(NumbersMin),
+		formFs:            None,
 	}
 
 	for i := range m.data {
@@ -42,6 +46,10 @@ func NewMatrix(x, y int) *Matrix {
 func (m *Matrix) SetValue(value Evaluated, i, j int) error {
 	if i < m.countAlternatives && j < m.countCriteria {
 		m.data[i].grade[j] = value
+		m.highType = HighType(m.highType, reflect.TypeOf(value))
+		if m.formFs < value.GetForm() {
+			m.formFs = value.GetForm()
+		}
 	} else {
 		return OutOfBounds
 	}
@@ -60,6 +68,10 @@ func (m *Matrix) SetMatrix(data [][]Evaluated) error {
 	for i := 0; i < m.countAlternatives; i++ {
 		for j := 0; j < m.countCriteria; j++ {
 			m.data[i].grade[j] = data[i][j]
+			m.highType = HighType(m.highType, reflect.TypeOf(data[i][j]))
+			if m.formFs < data[i][j].GetForm() {
+				m.formFs = data[i][j].GetForm()
+			}
 		}
 	}
 	return nil
@@ -92,143 +104,129 @@ func (m *Matrix) SetTypeAndForm(t reflect.Type, f Variants) {
 	m.highType = t
 }
 
-func TypingMatrices(matrices ...*Matrix) (reflect.Type, Variants, error) {
-	hasInterval := false
-	hasT1FS := false
-	hasAIFS := false
-	hasIT2FS := false
-	hasTriangle := false
-	hasTrapezoid := false
-	x, y := matrices[0].countAlternatives, matrices[0].countCriteria
+func (m *Matrix) CastToType(t reflect.Type, f Variants) {
+	var wg sync.WaitGroup
+	wg.Add(len(m.data))
+	for i := range m.data {
+		go func(i int) {
+			defer wg.Done()
+			for j := range m.data[i].grade {
+				if t == reflect.TypeOf(&IT2FS{}) {
+					m.data[i].grade[j] = m.data[i].grade[j].ConvertToIT2FS(f)
+				} else if t == reflect.TypeOf(&AIFS{}) {
+					m.data[i].grade[j] = m.data[i].grade[j].ConvertToAIFS(f)
+				} else if t == reflect.TypeOf(&T1FS{}) {
+					m.data[i].grade[j] = m.data[i].grade[j].ConvertToT1FS(f)
+				} else if t == reflect.TypeOf(Interval{}) {
+					m.data[i].grade[j] = m.data[i].grade[j].ConvertToInterval()
+				}
+			}
+		}(i)
+	}
+	wg.Wait()
+}
 
+func TypingMatrices(matrices ...*Matrix) error {
+	x, y := matrices[0].countAlternatives, matrices[0].countCriteria
+	var highestType reflect.Type
+	var highestForm Variants
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	wg.Add(len(matrices))
 	for k := range matrices {
 		if matrices[k].countAlternatives != x || matrices[k].countCriteria != y {
-			return nil, 0, InvalidSize
+			cancel()
+			return InvalidSize
 		}
 
-		for i := range matrices[k].data {
-			if hasIT2FS && hasTrapezoid {
-				break
+		go func(k int, ctx context.Context) {
+			defer wg.Done()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				mu.Lock()
+				highestType = HighType(highestType, matrices[k].highType)
+				if highestForm < matrices[k].formFs {
+					highestForm = matrices[k].formFs
+				}
+				mu.Unlock()
 			}
-
-			for _, eval := range matrices[k].data[i].grade {
-				if reflect.TypeOf(eval) == reflect.TypeOf(Interval{}) {
-					hasInterval = true
-				}
-				if reflect.TypeOf(eval) == reflect.TypeOf(&T1FS{}) {
-					hasT1FS = true
-					if eval.ConvertToT1FS(Default).form == Triangle {
-						hasTriangle = true
-					} else {
-						hasTrapezoid = true
-						break
-					}
-				}
-				if reflect.TypeOf(eval) == reflect.TypeOf(&AIFS{}) {
-					hasAIFS = true
-					if eval.ConvertToAIFS(Default).form == Triangle {
-						hasTriangle = true
-					} else {
-						hasTrapezoid = true
-						break
-					}
-				}
-				if reflect.TypeOf(eval) == reflect.TypeOf(&IT2FS{}) {
-					hasIT2FS = true
-					if eval.ConvertToIT2FS(Default).form == Triangle {
-						hasTriangle = true
-					} else {
-						hasTrapezoid = true
-						break
-					}
-				}
-			}
-		}
+		}(k, ctx)
 	}
 
-	ret := reflect.TypeOf(NumbersMin)
-	if hasIT2FS {
-		ret = reflect.TypeOf(&IT2FS{})
-	} else if hasAIFS {
-		ret = reflect.TypeOf(&AIFS{})
-	} else if hasT1FS {
-		ret = reflect.TypeOf(&T1FS{})
-	} else if hasInterval {
-		ret = reflect.TypeOf(Interval{})
-	}
+	wg.Wait()
 
-	var form Variants
-	if hasTrapezoid {
-		form = Trapezoid
-	} else if hasTriangle {
-		form = Triangle
-	}
-
+	wg.Add(len(matrices))
 	for k := range matrices {
-		for i := range matrices[k].data {
-			for j := range matrices[k].data[i].grade {
-				if hasIT2FS && hasTrapezoid {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToIT2FS(Trapezoid)
-				} else if hasIT2FS && hasTriangle {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToIT2FS(Triangle)
-				} else if hasAIFS && hasTrapezoid {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToAIFS(Trapezoid)
-				} else if hasAIFS && hasTriangle {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToAIFS(Triangle)
-				} else if hasT1FS && hasTrapezoid {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToT1FS(Trapezoid)
-				} else if hasT1FS && hasTriangle {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToT1FS(Triangle)
-				} else if hasInterval {
-					matrices[k].data[i].grade[j] = matrices[k].data[i].grade[j].ConvertToInterval()
-				}
-			}
-		}
+		go func(k int) {
+			defer wg.Done()
+			matrices[k].CastToType(highestType, highestForm)
+		}(k)
 	}
 
-	hasIntervalWeight := false
+	wg.Wait()
+
+	weightType := reflect.TypeOf(NumbersMin)
+	wg.Add(len(matrices))
 	for k := range matrices {
-		for _, c := range matrices[k].criteria {
-			if reflect.TypeOf(c.weight) == reflect.TypeOf(Interval{}) {
-				hasIntervalWeight = true
-				break
-			}
-		}
-		if hasIntervalWeight {
-			break
-		}
+		go func(k int) {
+			defer wg.Done()
+			mu.Lock()
+			weightType = HighType(weightType, GetHighType(matrices[k].criteria))
+			mu.Unlock()
+		}(k)
 	}
 
-	if hasIntervalWeight {
+	wg.Wait()
+	if weightType == reflect.TypeOf(Interval{}) {
+		wg.Add(len(matrices))
 		for k := range matrices {
-			for i := range matrices[k].criteria {
-				matrices[k].criteria[i].weight = matrices[k].criteria[i].weight.ConvertToInterval()
-			}
+			go func(k int) {
+				defer wg.Done()
+				for i := range matrices[k].criteria {
+					matrices[k].criteria[i].weight = matrices[k].criteria[i].weight.ConvertToInterval()
+				}
+			}(k)
 		}
 	}
 
-	return ret, form, nil
+	wg.Wait()
+	return nil
 }
 
 func AggregateRatings(matrices []*Matrix, weights []Evaluated) (*Matrix, error) {
 	result := NewMatrix(matrices[0].countAlternatives, matrices[0].countCriteria)
-	if highType, form, err := TypingMatrices(matrices...); err != nil {
-		return nil, errors.Join(err)
-	} else {
-		result.highType = highType
-		result.formFs = form
+	if err := TypingMatrices(matrices...); err != nil {
+		return nil, err
 	}
+	result.highType = matrices[0].highType
+	result.formFs = matrices[0].formFs
 
+	var wg1 sync.WaitGroup
+	var mu sync.Mutex
+
+	wg1.Add(len(matrices))
 	for k := range matrices {
-		for i := range matrices[k].data {
-			for j, eval := range matrices[k].data[i].grade {
-				if result.data[i].grade[j] == nil {
-					result.data[i].grade[j] = eval.Weighted(weights[k])
-				} else {
-					result.data[i].grade[j] = result.data[i].grade[j].Sum(eval.Weighted(weights[k]))
+		go func(k int) {
+			defer wg1.Done()
+
+			for i := range matrices[k].data {
+				for j, eval := range matrices[k].data[i].grade {
+					mu.Lock()
+					if result.data[i].grade[j] == nil {
+						result.data[i].grade[j] = eval.Weighted(weights[k])
+					} else {
+						result.data[i].grade[j] = result.data[i].grade[j].Sum(eval.Weighted(weights[k]))
+					}
+					mu.Unlock()
 				}
 			}
-		}
+		}(k)
 	}
+	wg1.Wait()
 	return result, nil
 }

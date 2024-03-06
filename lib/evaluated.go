@@ -12,6 +12,7 @@ type Evaluated interface {
 	ConvertToT1FS(f Variants) *T1FS
 	ConvertToAIFS(f Variants) *AIFS
 	ConvertToIT2FS(f Variants) *IT2FS
+	GetForm() Variants
 	Weighted(weight Evaluated) Evaluated
 	String() string
 	DiffNumber(other Evaluated, v Variants) (Number, error)
@@ -85,4 +86,40 @@ func Min[T Evaluated](a, b T) Evaluated {
 
 	fmt.Println("Call deprecated method min")
 	return nil
+}
+
+func HighType(a, b reflect.Type) reflect.Type {
+	hasInterval := false
+	hasT1FS := false
+	hasAIFS := false
+	hasIT2FS := false
+
+	types := []reflect.Type{a, b}
+
+	for _, t := range types {
+		if t == reflect.TypeOf(Interval{}) {
+			hasInterval = true
+		}
+		if t == reflect.TypeOf(&T1FS{}) {
+			hasT1FS = true
+		}
+		if t == reflect.TypeOf(&AIFS{}) {
+			hasAIFS = true
+		}
+		if t == reflect.TypeOf(&IT2FS{}) {
+			hasIT2FS = true
+		}
+	}
+
+	ret := reflect.TypeOf(NumbersMin)
+	if hasIT2FS {
+		ret = reflect.TypeOf(&IT2FS{})
+	} else if hasAIFS {
+		ret = reflect.TypeOf(&AIFS{})
+	} else if hasT1FS {
+		ret = reflect.TypeOf(&T1FS{})
+	} else if hasInterval {
+		ret = reflect.TypeOf(Interval{})
+	}
+	return ret
 }

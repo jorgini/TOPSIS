@@ -92,8 +92,12 @@ func AggregateScores(matrices []*SmartMatrix, weights []Evaluated) (*SmartMatrix
 		if x != matrices[k].countAlternatives {
 			return nil, InvalidSize
 		}
-		for i, dist := range matrices[k].finalScores {
-			result.finalScores[i] = result.finalScores[i].Sum(dist.Weighted(weights[k]).ConvertToNumber())
+		for i, score := range matrices[k].finalScores {
+			if k == 0 {
+				result.finalScores[i] = score.Weighted(weights[k])
+				continue
+			}
+			result.finalScores[i] = result.finalScores[i].Sum(score.Weighted(weights[k]))
 		}
 	}
 	return result, nil

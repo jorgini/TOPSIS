@@ -1,15 +1,18 @@
 package lib
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
 	"reflect"
+	"sync"
 )
 
 var CountOfAlfaSlices = 100
 
 const (
+	None      = 0
 	Triangle  = 1
 	Trapezoid = 2
 )
@@ -102,6 +105,10 @@ func (t *T1FS) ConvertToIT2FS(v Variants) *IT2FS {
 	}
 }
 
+func (t *T1FS) GetForm() Variants {
+	return t.form
+}
+
 func (t *T1FS) Weighted(weight Evaluated) Evaluated {
 	wt := NewT1FS(t.vert...)
 	for i := range t.vert {
@@ -157,65 +164,82 @@ func (t *T1FS) Sum(other Evaluated) Evaluated {
 }
 
 func positiveIdealRateT1FS(alts []Alternative, criteria []Criterion, form Variants) (*Alternative, error) {
+	var wg sync.WaitGroup
+	var err error = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	positive := &Alternative{make([]Evaluated, len(alts[0].grade)), len(criteria)}
 
+	wg.Add(len(criteria))
 	for i, c := range criteria {
-		for j := range alts {
-			if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&T1FS{}) &&
-				reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&IT2FS{}) {
-				return nil, IncompatibleTypes
-			}
+		go func(i int, c Criterion) {
+			defer wg.Done()
 
-			if positive.grade[i] == nil && c.typeOfCriteria == Benefit {
-				if form == Triangle {
-					positive.grade[i] = NewT1FS(NumbersMin, NumbersMin, NumbersMin)
-				} else {
-					positive.grade[i] = NewT1FS(NumbersMin, NumbersMin, NumbersMin, NumbersMin)
-				}
-			} else if positive.grade[i] == nil && c.typeOfCriteria == Cost {
-				if form == Triangle {
-					positive.grade[i] = NewT1FS(NumbersMax, NumbersMax, NumbersMax)
-				} else {
-					positive.grade[i] = NewT1FS(NumbersMax, NumbersMax, NumbersMax, NumbersMax)
-				}
-			}
-
-			if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(&T1FS{}) {
-				if c.typeOfCriteria == Benefit {
-					positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
-				} else {
-					positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
-				}
-			} else {
-				positiveGrade := positive.grade[i].ConvertToT1FS(Default)
-				altsGrade := alts[j].grade[i].ConvertToIT2FS(Default)
-
-				if c.typeOfCriteria == Benefit {
-					positiveGrade.vert[0] =
-						Max(positiveGrade.vert[0], altsGrade.bottom[0].End).ConvertToNumber()
-					positiveGrade.vert[1] =
-						Max(positiveGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
-					if form == Triangle {
-						positiveGrade.vert[2] =
-							Max(positiveGrade.vert[2], altsGrade.bottom[1].End).ConvertToNumber()
-					} else {
-						positiveGrade.vert[2] = Max(positiveGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
-						positiveGrade.vert[3] = Max(positiveGrade.vert[3], altsGrade.bottom[1].End).ConvertToNumber()
+			for j := range alts {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&T1FS{}) &&
+						reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(&IT2FS{}) {
+						cancel()
+						err = IncompatibleTypes
+						return
 					}
-				} else {
-					positiveGrade.vert[0] = Min(positiveGrade.vert[0], altsGrade.bottom[0].Start).ConvertToNumber()
-					positiveGrade.vert[1] = Min(positiveGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
-					if form == Triangle {
-						positiveGrade.vert[2] = Min(positiveGrade.vert[2], altsGrade.bottom[1].Start).ConvertToNumber()
+
+					if positive.grade[i] == nil && c.typeOfCriteria == Benefit {
+						if form == Triangle {
+							positive.grade[i] = NewT1FS(NumbersMin, NumbersMin, NumbersMin)
+						} else {
+							positive.grade[i] = NewT1FS(NumbersMin, NumbersMin, NumbersMin, NumbersMin)
+						}
+					} else if positive.grade[i] == nil && c.typeOfCriteria == Cost {
+						if form == Triangle {
+							positive.grade[i] = NewT1FS(NumbersMax, NumbersMax, NumbersMax)
+						} else {
+							positive.grade[i] = NewT1FS(NumbersMax, NumbersMax, NumbersMax, NumbersMax)
+						}
+					}
+
+					if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(&T1FS{}) {
+						if c.typeOfCriteria == Benefit {
+							positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
+						} else {
+							positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+						}
 					} else {
-						positiveGrade.vert[2] = Min(positiveGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
-						positiveGrade.vert[3] = Min(positiveGrade.vert[3], altsGrade.bottom[1].Start).ConvertToNumber()
+						posGrade := positive.grade[i].ConvertToT1FS(Default)
+						altsGrade := alts[j].grade[i].ConvertToIT2FS(Default)
+
+						if c.typeOfCriteria == Benefit {
+							posGrade.vert[0] =
+								Max(posGrade.vert[0], altsGrade.bottom[0].End).ConvertToNumber()
+							posGrade.vert[1] =
+								Max(posGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
+							if form == Triangle {
+								posGrade.vert[2] =
+									Max(posGrade.vert[2], altsGrade.bottom[1].End).ConvertToNumber()
+							} else {
+								posGrade.vert[2] = Max(posGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
+								posGrade.vert[3] = Max(posGrade.vert[3], altsGrade.bottom[1].End).ConvertToNumber()
+							}
+						} else {
+							posGrade.vert[0] = Min(posGrade.vert[0], altsGrade.bottom[0].Start).ConvertToNumber()
+							posGrade.vert[1] = Min(posGrade.vert[1], altsGrade.upward[0]).ConvertToNumber()
+							if form == Triangle {
+								posGrade.vert[2] = Min(posGrade.vert[2], altsGrade.bottom[1].Start).ConvertToNumber()
+							} else {
+								posGrade.vert[2] = Min(posGrade.vert[2], altsGrade.upward[1]).ConvertToNumber()
+								posGrade.vert[3] = Min(posGrade.vert[3], altsGrade.bottom[1].Start).ConvertToNumber()
+							}
+						}
 					}
 				}
 			}
-		}
+		}(i, c)
 	}
-	return positive, nil
+	wg.Wait()
+	return positive, err
 }
 
 func negativeIdealRateT1FS(alts []Alternative, criteria []Criterion, form Variants) (*Alternative, error) {

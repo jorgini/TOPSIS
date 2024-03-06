@@ -1,9 +1,11 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"reflect"
+	"sync"
 )
 
 type Number float64
@@ -48,6 +50,10 @@ func (n Number) ConvertToIT2FS(v Variants) *IT2FS {
 	}
 }
 
+func (n Number) GetForm() Variants {
+	return None
+}
+
 func (n Number) Weighted(weight Evaluated) Evaluated {
 	if reflect.TypeOf(weight) == reflect.TypeOf(Number(0)) || reflect.TypeOf(weight) == reflect.TypeOf(Interval{}) {
 		return n * weight.ConvertToNumber()
@@ -78,37 +84,57 @@ func (n Number) Sum(other Evaluated) Evaluated {
 }
 
 func positiveIdealRateNumber(alts []Alternative, criteria []Criterion) (*Alternative, error) {
+	var wg sync.WaitGroup
+	var err error = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	positive := &Alternative{make([]Evaluated, len(alts[0].grade)), len(criteria)}
 
+	wg.Add(len(criteria))
 	for i, c := range criteria {
-		for j := range alts {
-			if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(NumbersMin) &&
-				reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(Interval{}) {
-				return nil, IncompatibleTypes
-			}
+		go func(i int, c Criterion) {
+			defer wg.Done()
 
-			if positive.grade[i] == nil && c.typeOfCriteria == Benefit {
-				positive.grade[i] = NumbersMin
-			} else if positive.grade[i] == nil && c.typeOfCriteria == Cost {
-				positive.grade[i] = NumbersMax
-			}
+			for j := range alts {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(NumbersMin) &&
+						reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(Interval{}) {
+						err = IncompatibleTypes
+						cancel()
+						return
+					}
 
-			if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(Interval{}) {
-				if c.typeOfCriteria == Benefit {
-					positive.grade[i] = Max(positive.grade[i].ConvertToNumber(), alts[j].grade[i].ConvertToInterval().End)
-				} else {
-					positive.grade[i] = Min(positive.grade[i].ConvertToNumber(), alts[j].grade[i].ConvertToInterval().Start)
-				}
-			} else if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(NumbersMin) {
-				if c.typeOfCriteria == Benefit {
-					positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
-				} else {
-					positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+					if positive.grade[i] == nil && c.typeOfCriteria == Benefit {
+						positive.grade[i] = NumbersMin
+					} else if positive.grade[i] == nil && c.typeOfCriteria == Cost {
+						positive.grade[i] = NumbersMax
+					}
+
+					if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(Interval{}) {
+						if c.typeOfCriteria == Benefit {
+							positive.grade[i] = Max(positive.grade[i].ConvertToNumber(),
+								alts[j].grade[i].ConvertToInterval().End)
+						} else {
+							positive.grade[i] = Min(positive.grade[i].ConvertToNumber(),
+								alts[j].grade[i].ConvertToInterval().Start)
+						}
+					} else if reflect.TypeOf(alts[j].grade[i]) == reflect.TypeOf(NumbersMin) {
+						if c.typeOfCriteria == Benefit {
+							positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
+						} else {
+							positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+						}
+					}
 				}
 			}
-		}
+		}(i, c)
 	}
-	return positive, nil
+
+	wg.Wait()
+	return positive, err
 }
 
 func negativeIdealRateNumber(alts []Alternative, criteria []Criterion) (*Alternative, error) {

@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	topsis "github.com/jorka/TOPSIS/lib"
+	"go.uber.org/goleak"
 	"math"
 	"math/rand"
 	"reflect"
@@ -69,10 +70,8 @@ func GenerateMatrix(valueType, weightType reflect.Type, seed int64) *topsis.Matr
 
 func TopsisCalculating(matrix *topsis.TopsisMatrix, valueNorm, weightNorm, idelaAlg, fsDist,
 	intDist, numDist topsis.Variants) ([]topsis.Evaluated, error) {
-	if t, f, err := topsis.TypingMatrices(matrix.Matrix); err != nil {
+	if err := topsis.TypingMatrices(matrix.Matrix); err != nil {
 		return nil, err
-	} else {
-		matrix.SetTypeAndForm(t, f)
 	}
 
 	if err := matrix.Normalization(valueNorm, weightNorm); err != nil {
@@ -81,7 +80,10 @@ func TopsisCalculating(matrix *topsis.TopsisMatrix, valueNorm, weightNorm, idela
 
 	matrix.CalcWeightedMatrix()
 
-	matrix.FindIdeals(idelaAlg)
+	err := matrix.FindIdeals(idelaAlg)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := matrix.FindDistanceToIdeals(fsDist, intDist, numDist); err != nil {
 		return nil, err
@@ -93,7 +95,7 @@ func TopsisCalculating(matrix *topsis.TopsisMatrix, valueNorm, weightNorm, idela
 }
 
 func SmartCalculating(matrix *topsis.SmartMatrix) ([]topsis.Evaluated, error) {
-	if _, _, err := topsis.TypingMatrices(matrix.Matrix); err != nil {
+	if err := topsis.TypingMatrices(matrix.Matrix); err != nil {
 		return nil, err
 	}
 
@@ -149,6 +151,7 @@ func TestTableDriven(t *testing.T) {
 	for i, tt := range tests {
 		testname := fmt.Sprintf("%d test", i)
 		t.Run(testname, func(t *testing.T) {
+			defer goleak.VerifyNone(t)
 			if res, err := TopsisCalculating(tt.initMat, tt.valueNorm, tt.weightNorm, tt.idelaAlg, tt.fsDist,
 				tt.intDist, tt.numDist); err != nil {
 				t.Errorf(err.Error())

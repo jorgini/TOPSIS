@@ -1,9 +1,11 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"reflect"
+	"sync"
 )
 
 type Interval struct {
@@ -44,6 +46,10 @@ func (i Interval) ConvertToIT2FS(v Variants) *IT2FS {
 	} else {
 		return NewIT2FS([]Interval{{i.Start, i.Start}, {i.End, i.End}}, []Number{i.Start, i.End})
 	}
+}
+
+func (i Interval) GetForm() Variants {
+	return None
 }
 
 func (i Interval) Weighted(weight Evaluated) Evaluated {
@@ -111,28 +117,44 @@ func (i Interval) SenguptaGeq(other Interval) bool {
 }
 
 func positiveIdealRateInterval(alts []Alternative, criteria []Criterion) (*Alternative, error) {
+	var wg sync.WaitGroup
+	var err error = nil
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	positive := &Alternative{make([]Evaluated, len(alts[0].grade)), len(criteria)}
 
+	wg.Add(len(criteria))
 	for i, c := range criteria {
-		for j := range alts {
-			if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(Interval{}) {
-				return nil, IncompatibleTypes
-			}
+		go func(i int, c Criterion) {
+			defer wg.Done()
 
-			if positive.grade[i] == nil {
-				positive.grade[i] = alts[j].grade[i]
-				continue
-			}
+			for j := range alts {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if reflect.TypeOf(alts[j].grade[i]) != reflect.TypeOf(Interval{}) {
+						cancel()
+						err = IncompatibleTypes
+						return
+					}
 
-			if c.typeOfCriteria == Benefit {
-				positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
-			} else {
-				positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+					if positive.grade[i] == nil {
+						positive.grade[i] = alts[j].grade[i]
+						continue
+					}
+
+					if c.typeOfCriteria == Benefit {
+						positive.grade[i] = Max(positive.grade[i], alts[j].grade[i])
+					} else {
+						positive.grade[i] = Min(positive.grade[i], alts[j].grade[i])
+					}
+				}
 			}
-		}
+		}(i, c)
 	}
-
-	return positive, nil
+	wg.Wait()
+	return positive, err
 }
 
 func negativeIdealRateInterval(alts []Alternative, criteria []Criterion) (*Alternative, error) {
