@@ -2,149 +2,153 @@ package tests
 
 import (
 	"fmt"
-	topsis "github.com/jorka/TOPSIS/lib"
 	"go.uber.org/goleak"
 	"math"
 	"math/rand"
 	"reflect"
 	"sort"
 	"testing"
+	"webApp/lib/eval"
+	"webApp/lib/matrix"
+	"webApp/lib/smart"
+	"webApp/lib/topsis"
+	v "webApp/lib/variables"
 )
 
-func GenerateMatrix(valueType, weightType reflect.Type, seed int64) *topsis.Matrix {
+func GenerateMatrix(valueType, weightType reflect.Type, seed int64) *matrix.Matrix {
 	gen := rand.New(rand.NewSource(seed))
 	var ceil int
-	if valueType == reflect.TypeOf(topsis.Number(0)) {
+	if valueType == reflect.TypeOf(eval.Number(0)) {
 		ceil = 1
-	} else if valueType == reflect.TypeOf(topsis.Interval{}) {
+	} else if valueType == reflect.TypeOf(eval.Interval{}) {
 		ceil = 2
 	} else {
 		ceil = 3
 	}
 
 	n, m := gen.Intn(5)+1, gen.Intn(5)+1
-	matrix := topsis.NewMatrix(n, m)
+	newMatrix := matrix.NewMatrix(n, m)
 
 	for i := 0; i < n; i++ {
 		for j := 0; j < m; j++ {
 			typeEval := gen.Intn(ceil) + 1
 
 			if typeEval == 1 {
-				matrix.SetValue(topsis.Number(gen.Float64()*10), i, j)
+				_ = newMatrix.SetValue(eval.Number(gen.Float64()*10), i, j)
 			} else if typeEval == 2 {
 				a, b := gen.Float64()*10, gen.Float64()*10
-				matrix.SetValue(topsis.Interval{topsis.Number(math.Min(a, b)), topsis.Number(math.Max(a, b))}, i, j)
+				_ = newMatrix.SetValue(eval.Interval{Start: eval.Number(math.Min(a, b)), End: eval.Number(math.Max(a, b))}, i, j)
 			} else {
-				var vert []topsis.Number
+				var vert []eval.Number
 				if gen.Float64() > 0.5 {
-					vert = make([]topsis.Number, 3)
+					vert = make([]eval.Number, 3)
 				} else {
-					vert = make([]topsis.Number, 4)
+					vert = make([]eval.Number, 4)
 				}
 
 				for i := range vert {
-					vert[i] = topsis.Number(gen.Float64() * 10)
+					vert[i] = eval.Number(gen.Float64() * 10)
 				}
 
 				sort.Slice(vert, func(i, j int) bool {
 					return vert[i] < vert[j]
 				})
 
-				matrix.SetValue(topsis.NewT1FS(vert...), i, j)
+				_ = newMatrix.SetValue(eval.NewT1FS(vert...), i, j)
 			}
 		}
 	}
 
 	for i := 0; i < m; i++ {
-		if weightType == reflect.TypeOf(topsis.Interval{}) && gen.Float64() > 0.5 {
+		if weightType == reflect.TypeOf(eval.Interval{}) && gen.Float64() > 0.5 {
 			a, b := gen.Float64()*10, gen.Float64()*10
-			matrix.SetCriterion(topsis.Interval{topsis.Number(math.Min(a, b)), topsis.Number(math.Max(a, b))},
+			_ = newMatrix.SetCriterion(eval.Interval{Start: eval.Number(math.Min(a, b)), End: eval.Number(math.Max(a, b))},
 				gen.Float64() > 0.3, i)
 		} else {
-			matrix.SetCriterion(topsis.Number(gen.Float64()*10), gen.Float64() > 0.3, i)
+			_ = newMatrix.SetCriterion(eval.Number(gen.Float64()*10), gen.Float64() > 0.3, i)
 		}
 	}
 
-	return matrix
+	return newMatrix
 }
 
-func TopsisCalculating(matrix *topsis.TopsisMatrix, valueNorm, weightNorm, idelaAlg, fsDist,
-	intDist, numDist topsis.Variants) ([]topsis.Evaluated, error) {
-	if err := topsis.TypingMatrices(matrix.Matrix); err != nil {
+func TopsisCalculating(topsisMatrix *topsis.TopsisMatrix, valueNorm, weightNorm, idelaAlg, fsDist,
+	intDist, numDist v.Variants) ([]eval.Rating, error) {
+	if err := matrix.TypingMatrices(*topsisMatrix.Matrix); err != nil {
 		return nil, err
 	}
 
-	if err := matrix.Normalization(valueNorm, weightNorm); err != nil {
+	if err := topsisMatrix.Normalization(valueNorm, weightNorm); err != nil {
 		return nil, err
 	}
 
-	matrix.CalcWeightedMatrix()
+	topsisMatrix.CalcWeightedMatrix()
 
-	err := matrix.FindIdeals(idelaAlg)
+	err := topsisMatrix.FindIdeals(idelaAlg)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := matrix.FindDistanceToIdeals(fsDist, intDist, numDist); err != nil {
+	if err := topsisMatrix.FindDistanceToIdeals(fsDist, intDist, numDist); err != nil {
 		return nil, err
 	}
 
-	matrix.CalcCloseness()
+	topsisMatrix.CalcCloseness()
 
-	return matrix.GetCoefs(), nil
+	return topsisMatrix.GetCoefs(), nil
 }
 
-func SmartCalculating(matrix *topsis.SmartMatrix) ([]topsis.Evaluated, error) {
-	if err := topsis.TypingMatrices(matrix.Matrix); err != nil {
+func SmartCalculating(smartMatrix *smart.SmartMatrix) ([]eval.Rating, error) {
+	if err := matrix.TypingMatrices(*smartMatrix.Matrix); err != nil {
 		return nil, err
 	}
 
-	if err := matrix.Normalization(topsis.NormalizeWithSum, topsis.NormalizeWithSum); err != nil {
+	if err := smartMatrix.Normalization(v.NormalizeWithSum, v.NormalizeWithSum); err != nil {
 		return nil, err
 	}
 
-	matrix.CalcWeightedMatrix()
+	smartMatrix.CalcWeightedMatrix()
 
-	matrix.CalcFinalScore()
+	smartMatrix.CalcFinalScore()
 
-	return matrix.GetScores(), nil
+	return smartMatrix.GetScores(), nil
 }
 
 func TestTableDriven(t *testing.T) {
 	var tests = []struct {
 		initMat                                                   *topsis.TopsisMatrix
-		valueNorm, weightNorm, idelaAlg, fsDist, intDist, numDist topsis.Variants
-		resultRow                                                 []topsis.Number
+		valueNorm, weightNorm, idelaAlg, fsDist, intDist, numDist v.Variants
+		resultRow                                                 []eval.Number
 	}{
 		{
-			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(topsis.Number(0)), reflect.TypeOf(topsis.Number(0)), 100)),
-			valueNorm:  topsis.NormalizeWithSum,
-			weightNorm: topsis.NormalizeWithSum,
-			idelaAlg:   topsis.Default,
-			fsDist:     topsis.Default,
-			intDist:    topsis.Default,
-			numDist:    topsis.SqrtDistance,
-			resultRow:  []topsis.Number{0.676, 0.547, 0.266, 0.306},
+			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(eval.Number(0)), reflect.TypeOf(eval.Number(0)), 100)),
+			valueNorm:  v.NormalizeWithSum,
+			weightNorm: v.NormalizeWithSum,
+			idelaAlg:   v.Default,
+			fsDist:     v.Default,
+			intDist:    v.Default,
+			numDist:    v.SqrtDistance,
+			resultRow:  []eval.Number{0.676, 0.547, 0.266, 0.306},
 		},
 		{
-			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(topsis.Interval{}), reflect.TypeOf(topsis.Interval{}), 150)),
-			valueNorm:  topsis.NormalizeWithSum,
-			weightNorm: topsis.NormalizeWithSum,
-			idelaAlg:   topsis.Default,
-			fsDist:     topsis.Default,
-			intDist:    topsis.Default,
-			numDist:    topsis.SqrtDistance,
-			resultRow:  []topsis.Number{0.61, 0.61, 0.49},
+			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(eval.Interval{}), reflect.TypeOf(eval.Interval{}), 150)),
+			valueNorm:  v.NormalizeWithSum,
+			weightNorm: v.NormalizeWithSum,
+			idelaAlg:   v.Default,
+			fsDist:     v.Default,
+			intDist:    v.Default,
+			numDist:    v.SqrtDistance,
+			resultRow:  []eval.Number{0.61, 0.61, 0.49},
 		},
 		{
-			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(&topsis.T1FS{}), reflect.TypeOf(topsis.Interval{}), 100)),
-			valueNorm:  topsis.NormalizeWithMax,
-			weightNorm: topsis.NormalizeWithSum,
-			idelaAlg:   topsis.Default,
-			fsDist:     topsis.Default,
-			intDist:    topsis.Default,
-			numDist:    topsis.CbrtDistance,
-			resultRow:  []topsis.Number{0.57, 0.63, 0.35, 0.63},
+			initMat:    topsis.ConvertToTopsisMatrix(GenerateMatrix(reflect.TypeOf(&eval.T1FS{}), reflect.TypeOf(eval.Interval{}), 100)),
+			valueNorm:  v.NormalizeValueWithMax,
+			weightNorm: v.NormalizeWithSum,
+			idelaAlg:   v.Default,
+			fsDist:     v.Default,
+			intDist:    v.Default,
+			numDist:    v.CbrtDistance,
+			resultRow:  []eval.Number{0.57, 0.63, 0.35, 0.63},
 		},
 	}
 
