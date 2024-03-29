@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"webApp/entity"
 	"webApp/lib/eval"
 	"webApp/repository"
 )
@@ -70,6 +71,28 @@ func (m *MatrixService) GetRatings(ctx context.Context, uid, sid, ord int64) ([]
 	return matrix.GetAlternativeRatings(int(ord))
 }
 
-func (m *MatrixService) GetUIDsRelateToTask(ctx context.Context, sid int64) ([]int64, error) {
-	return m.repo.GetUIDsRelateToTask(ctx, sid)
+func (m *MatrixService) GetExpertsRelateToTask(ctx context.Context, sid int64) ([]entity.ExpertStatus, error) {
+	return m.repo.GetExpertsRelateToTask(ctx, sid)
+}
+
+func (m *MatrixService) SetStatusComplete(ctx context.Context, mid int64) error {
+	return m.repo.SetStatusComplete(ctx, mid)
+}
+
+func (m *MatrixService) DeactivateStatuses(ctx context.Context, sid int64) error {
+	return m.repo.DeactivateStatuses(ctx, sid)
+}
+
+func (m *MatrixService) IsAllStatusesComplete(ctx context.Context, sid int64) error {
+	experts, err := m.repo.GetExpertsRelateToTask(ctx, sid)
+	if err != nil {
+		return err
+	}
+
+	for i := range experts {
+		if experts[i].Status != entity.Complete {
+			return errors.New("not all experts complete their evaluating")
+		}
+	}
+	return nil
 }

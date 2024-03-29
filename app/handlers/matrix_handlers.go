@@ -93,3 +93,27 @@ func (h *Handler) GetRatings(c *fiber.Ctx) error {
 
 	return c.JSON(ratings)
 }
+
+func (h *Handler) CompleteStatus(c *fiber.Ctx) error {
+	uid, err := h.userIdentity(c)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	sid, err := strconv.ParseInt(c.Query("sid"), 10, 64)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("task doesn't specified"))
+	}
+
+	service := h.di.GetInstanceService()
+	mid, err := service.Matrix.GetMID(c.UserContext(), uid, sid)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if err := service.Matrix.SetStatusComplete(c.UserContext(), mid); err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	return c.JSON(fiber.Map{"status": "success"})
+}

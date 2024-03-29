@@ -12,10 +12,10 @@ import (
 
 type User interface {
 	CreateNewUser(ctx context.Context, user *entity.UserModel) (int64, error)
-	GetUID(ctx context.Context, email, password string) (int64, error)
+	GetUID(ctx context.Context, user *entity.UserModel) (int64, error)
 	UpdateUser(ctx context.Context, uid int64, update *entity.UserModel) error
 	DeleteUser(ctx context.Context, uid int64) error
-	GetUsersRelateToTask(ctx context.Context, sid int64) ([]string, error)
+	GetUsersRelateToTask(ctx context.Context, sid int64) ([]entity.Expert, error)
 }
 
 type Session interface {
@@ -47,7 +47,10 @@ type Matrix interface {
 	GetMID(ctx context.Context, uid, sid int64) (int64, error)
 	UpdateMatrix(ctx context.Context, sid, mid, ord int64, rating []eval.Rating) error
 	GetRatings(ctx context.Context, uid, sid, ord int64) ([]eval.Rating, error)
-	GetUIDsRelateToTask(ctx context.Context, sid int64) ([]int64, error)
+	GetExpertsRelateToTask(ctx context.Context, sid int64) ([]entity.ExpertStatus, error)
+	SetStatusComplete(ctx context.Context, mid int64) error
+	DeactivateStatuses(ctx context.Context, sid int64) error
+	IsAllStatusesComplete(ctx context.Context, sid int64) error
 }
 
 type Final interface {

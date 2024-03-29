@@ -177,19 +177,19 @@ func (m *MatrixDao) UpdateMatrix(ctx context.Context, mid, ord int64, rating []e
 	return m.c.closeConnection()
 }
 
-func (m *MatrixDao) GetUIDsRelateToTask(ctx context.Context, sid int64) ([]int64, error) {
-	query := fmt.Sprintf("SELECT uid FROM %s WHERE sid=$1", m.cfg.MatrixTable)
+func (m *MatrixDao) GetExpertsRelateToTask(ctx context.Context, sid int64) ([]entity.ExpertStatus, error) {
+	query := fmt.Sprintf("SELECT uid, status FROM %s WHERE sid=$1", m.cfg.MatrixTable)
 
 	conn := m.c.getConnection()
 	if conn == nil {
 		return nil, errors.New("cant connect to db")
 	}
 
-	var uids []int64
-	if err := conn.SelectContext(ctx, &uids, query, sid); err != nil {
+	var experts []entity.ExpertStatus
+	if err := conn.SelectContext(ctx, &experts, query, sid); err != nil {
 		return nil, errors.Join(err, m.c.closeConnection())
 	}
-	return uids, m.c.closeConnection()
+	return experts, m.c.closeConnection()
 }
 
 func (m *MatrixDao) GetMatricesRelateToTask(ctx context.Context, sid int64) ([]entity.MatrixModel, error) {
@@ -205,4 +205,32 @@ func (m *MatrixDao) GetMatricesRelateToTask(ctx context.Context, sid int64) ([]e
 		return nil, err
 	}
 	return matrices, nil
+}
+
+func (m *MatrixDao) SetStatusComplete(ctx context.Context, mid int64) error {
+	query := fmt.Sprintf("UPDATE %s SET status=$1 WHERE mid=$2", m.cfg.MatrixTable)
+
+	conn := m.c.getConnection()
+	if conn == nil {
+		return errors.New("cant connect to db")
+	}
+
+	if _, err := conn.ExecContext(ctx, query, entity.Complete, mid); err != nil {
+		return errors.Join(err, m.c.closeConnection())
+	}
+	return m.c.closeConnection()
+}
+
+func (m *MatrixDao) DeactivateStatuses(ctx context.Context, sid int64) error {
+	query := fmt.Sprintf("UPDATE %s SET status=$1 WHERE sid=$2", m.cfg.MatrixTable)
+
+	conn := m.c.getConnection()
+	if conn == nil {
+		return errors.New("cant connect to db")
+	}
+
+	if _, err := conn.ExecContext(ctx, query, sid); err != nil {
+		return errors.Join(err, m.c.closeConnection())
+	}
+	return m.c.closeConnection()
 }

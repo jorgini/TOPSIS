@@ -1,4 +1,4 @@
-package tests
+package matrix
 
 import (
 	"fmt"
@@ -6,13 +6,12 @@ import (
 	"reflect"
 	"testing"
 	"webApp/lib/eval"
-	"webApp/lib/matrix"
 )
 
 func TestTyping(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	if err := matrix.TypingMatrices(
+	if err := TypingMatrices(
 		*GenerateMatrix(reflect.TypeOf(&eval.T1FS{}), reflect.TypeOf(eval.Interval{}), 200),
 		*GenerateMatrix(reflect.TypeOf(&eval.T1FS{}), reflect.TypeOf(eval.Interval{}), 466)); err != nil {
 		fmt.Println(err)
@@ -22,7 +21,7 @@ func TestTyping(t *testing.T) {
 func TestAggregateRatings(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
-	if _, err := matrix.AggregateRatings([]matrix.Matrix{
+	if _, err := AggregateRatings([]Matrix{
 		*GenerateMatrix(reflect.TypeOf(&eval.T1FS{}), reflect.TypeOf(eval.Interval{}), 200),
 		*GenerateMatrix(reflect.TypeOf(&eval.T1FS{}), reflect.TypeOf(eval.Interval{}), 466)},
 		[]eval.Evaluated{eval.Number(0.3), eval.Number(0.7)}); err != nil {

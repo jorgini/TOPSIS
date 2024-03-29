@@ -24,6 +24,9 @@ func NewUserDao(factory IConnectionFactory, config *configs.DbConfig) *UserDao {
 
 func getUserUpdateQuery(user *entity.UserModel) (string, int) {
 	query := make([]string, 0, 2)
+	if user.Login != "" {
+		query = append(query, fmt.Sprintf("login=$%d ", len(query)+1))
+	}
 	if user.Email != "" {
 		query = append(query, fmt.Sprintf("email=$%d ", len(query)+1))
 	}
@@ -35,6 +38,9 @@ func getUserUpdateQuery(user *entity.UserModel) (string, int) {
 
 func getUserUpdateArgs(user *entity.UserModel) []interface{} {
 	args := make([]interface{}, 0, 2)
+	if user.Login != "" {
+		args = append(args, user.Login)
+	}
 	if user.Email != "" {
 		args = append(args, user.Email)
 	}
@@ -44,8 +50,26 @@ func getUserUpdateArgs(user *entity.UserModel) []interface{} {
 	return args
 }
 
+func logInBy(user *entity.UserModel) string {
+	if user.Email != "" {
+		return "email=$1"
+	} else if user.Login != "" {
+		return "login=$1"
+	}
+	return "error"
+}
+
+func logInByValue(user *entity.UserModel) interface{} {
+	if user.Email != "" {
+		return user.Email
+	} else if user.Login != "" {
+		return user.Login
+	}
+	return nil
+}
+
 func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (int64, error) {
-	query := fmt.Sprintf("INSERT INTO %s (email, password) values ($1, $2) RETURNING uid", u.cfg.UserTable)
+	query := fmt.Sprintf("INSERT INTO %s (login, email, password) values ($1, $2, $3) RETURNING uid", u.cfg.UserTable)
 
 	var uid int64
 
@@ -54,15 +78,15 @@ func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (in
 		return 0, errors.New("cant connect to db")
 	}
 
-	row := conn.QueryRowxContext(ctx, query, user.Email, user.Password)
+	row := conn.QueryRowxContext(ctx, query, user.Login, user.Email, user.Password)
 	if err := row.Scan(&uid); err != nil {
 		return 0, errors.Join(err, u.c.closeConnection())
 	}
 	return uid, u.c.closeConnection()
 }
 
-func (u *UserDao) GetUID(ctx context.Context, email, password string) (int64, error) {
-	query := fmt.Sprintf("SELECT uid FROM %s WHERE email=$1 and password=$2", u.cfg.UserTable)
+func (u *UserDao) GetUID(ctx context.Context, user *entity.UserModel) (int64, error) {
+	query := fmt.Sprintf("SELECT uid FROM %s WHERE %s and password=$2", u.cfg.UserTable, logInBy(user))
 
 	conn := u.c.getConnection()
 	if conn == nil {
@@ -70,7 +94,7 @@ func (u *UserDao) GetUID(ctx context.Context, email, password string) (int64, er
 	}
 
 	var uid int64
-	row := conn.QueryRowxContext(ctx, query, email, password)
+	row := conn.QueryRowxContext(ctx, query, logInByValue(user), user.Password)
 	if err := row.Scan(&uid); err != nil {
 		return 0, errors.Join(err, u.c.closeConnection())
 	}
@@ -109,16 +133,16 @@ func (u *UserDao) DeleteUser(ctx context.Context, uid int64) error {
 }
 
 func (u *UserDao) GetUserByUID(ctx context.Context, uid int64) (string, error) {
-	query := fmt.Sprintf("SELECT email FROM %s WHERE uid=$1", u.cfg.UserTable)
+	query := fmt.Sprintf("SELECT login FROM %s WHERE uid=$1", u.cfg.UserTable)
 
 	conn := u.c.getConnection()
 	if conn == nil {
 		return "", errors.New("cant connect to db")
 	}
 
-	var email string
-	if err := conn.GetContext(ctx, &email, query, uid); err != nil {
+	var login string
+	if err := conn.GetContext(ctx, &login, query, uid); err != nil {
 		return "", err
 	}
-	return email, nil
+	return login, nil
 }

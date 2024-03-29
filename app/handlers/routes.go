@@ -46,6 +46,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 		{
 			solSettings.Post("/", h.CreateSolution)
 			solSettings.Put("/", h.UpdateSolution)
+			solSettings.Patch("/experts", h.DeactivateStatuses)
 			solSettings.Get("/", h.GetSolution)
 			solSettings.Patch("/pass", h.SetPassword)
 		}
@@ -71,6 +72,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 			solRating.Post("/", h.CreateMatrix)
 			solRating.Put("/", h.UpdateMatrix)
 			solRating.Get("/", h.GetRatings)
+			solRating.Patch("/complete", h.CompleteStatus)
 		}
 
 		solExperts := solGroup.Group("/experts")

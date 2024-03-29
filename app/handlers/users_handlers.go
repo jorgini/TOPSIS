@@ -25,15 +25,51 @@ func (h *Handler) CreateNewUser(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "success"})
 }
 
+type UserInput struct {
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (u *UserInput) UnmarshalJSON(data []byte) error {
+	result := struct {
+		Login    string `json:"login"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}{}
+
+	if err := json.Unmarshal(data, &result); err != nil {
+		return err
+	}
+	if result.Email == "" && result.Password == "" && result.Login == "" {
+		return errors.New("invalid input data for update user")
+	} else {
+		u.Login = result.Login
+		u.Email = result.Email
+		u.Password = result.Password
+	}
+	return nil
+}
+
 func (h *Handler) LogIn(c *fiber.Ctx) error {
-	var user entity.UserModel
-	err := c.BodyParser(&user)
+	var input UserInput
+	err := c.BodyParser(&input)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
+	if input.Login == "" && input.Email == "" || input.Password == "" {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("empty input"))
+	}
+
+	user := entity.UserModel{
+		Login:    input.Login,
+		Email:    input.Email,
+		Password: input.Password,
+	}
+
 	service := h.di.GetInstanceService()
-	uid, err := service.User.GetUID(c.UserContext(), user.Email, user.Password)
+	uid, err := service.User.GetUID(c.UserContext(), &user)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusUnauthorized, err)
 	}
@@ -53,36 +89,13 @@ func (h *Handler) LogIn(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"token": tokens.Access})
 }
 
-type UserUpdate struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-func (u *UserUpdate) UnmarshalJSON(data []byte) error {
-	result := struct {
-		Email    string
-		Password string
-	}{}
-
-	if err := json.Unmarshal(data, &result); err != nil {
-		return err
-	}
-	if result.Email == "" && result.Password == "" {
-		return errors.New("invalid input data for update user")
-	} else {
-		u.Email = result.Email
-		u.Password = result.Password
-	}
-	return nil
-}
-
 func (h *Handler) UpdateUser(c *fiber.Ctx) error {
 	uid, err := h.userIdentity(c)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	var update UserUpdate
+	var update UserInput
 	if err := c.BodyParser(&update); err != nil {
 		return sendErrorResponse(c, fiber.StatusBadRequest, err)
 	}

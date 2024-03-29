@@ -310,3 +310,26 @@ func (h *Handler) GetExperts(c *fiber.Ctx) error {
 
 	return c.JSON(users)
 }
+
+func (h *Handler) DeactivateStatuses(c *fiber.Ctx) error {
+	uid, err := h.userIdentity(c)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	sid, err := strconv.ParseInt(c.Query("sid"), 10, 64)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("task doesn't specified"))
+	}
+
+	service := h.di.GetInstanceService()
+	if err := service.Task.ValidateUser(c.UserContext(), uid, sid); err != nil {
+		return sendErrorResponse(c, fiber.StatusForbidden, err)
+	}
+
+	if err := service.Matrix.DeactivateStatuses(c.UserContext(), sid); err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	return c.JSON(fiber.Map{"status": "success"})
+}

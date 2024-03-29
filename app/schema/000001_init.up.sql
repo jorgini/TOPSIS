@@ -1,13 +1,14 @@
 CREATE TABLE users
 (
     uid         serial PRIMARY KEY,
+    login       varchar(255) not null unique,
     email       varchar(255) not null unique,
     password    varchar(255) not null
 );
 
 CREATE TABLE sessions
 (
-    uid    integer       not null,
+    uid    integer      not null,
     token  varchar(255) not null unique,
     exp_at timestamp    not null,
     FOREIGN KEY (uid) REFERENCES users (uid) ON DELETE CASCADE

@@ -29,6 +29,10 @@ func (h *Handler) GetFinal(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusForbidden, err)
 	}
 
+	if err := svc.Matrix.IsAllStatusesComplete(c.UserContext(), sid); err != nil {
+		return sendErrorResponse(c, fiber.StatusBadRequest, err)
+	}
+
 	result, err := svc.Final.PresentFinal(c.UserContext(), sid, request.Threshold)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
