@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"strconv"
-	"webApp/app/entity"
+	"webApp/entity"
 	"webApp/lib/eval"
 	v "webApp/lib/variables"
 )

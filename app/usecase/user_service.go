@@ -5,8 +5,8 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"time"
-	"webApp/app/entity"
-	"webApp/app/repository"
+	"webApp/entity"
+	"webApp/repository"
 )
 
 var (

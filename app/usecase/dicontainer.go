@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"webApp/app/configs"
-	"webApp/app/repository"
+	"webApp/configs"
+	"webApp/repository"
 )
 
 type DiContainer struct {

@@ -10,11 +10,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"net/http/httptest"
 	"testing"
-	"webApp/app/entity"
-	"webApp/app/usecase"
-	mock_service "webApp/app/usecase/mocks"
+	"webApp/entity"
 	"webApp/lib/eval"
 	v "webApp/lib/variables"
+	"webApp/usecase"
+	mock_service "webApp/usecase/mocks"
 )
 
 func TestHandler_CreateSolution(t *testing.T) {

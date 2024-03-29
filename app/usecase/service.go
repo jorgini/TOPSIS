@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"webApp/app/configs"
-	"webApp/app/entity"
-	"webApp/app/repository"
+	"webApp/configs"
+	"webApp/entity"
 	"webApp/lib/eval"
+	"webApp/repository"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go

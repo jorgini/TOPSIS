@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css3?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+* body {
+    background-color: #ABF8F4;
+}
+
+.header {
+    border: 2px solid black;
+    border-radius: 0 0 1em 1em;
+    height: 9vmin;
+    position: relative;
+    display: inline-block;
+}
+
+.sign-up {
+    border: 2px solid black;
+    background-color: #ABF8F4;
+    border-radius: 5em;
+    padding: 0.2em 1.2em;
+    color: black;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    font-family: 'Inria Sans', sans-serif;
+    font-weight: 700;
+    font-size: 2.5vmin;
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translate(0, -50%)
+}
+
+.sign-up:hover {
+    filter: brightness(105%);
+    box-shadow: 0 6px 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.main {
+    font-family: 'Kavoon', serif;
+    font-weight: 400;
+    font-size: 3.3vmin;
+    color: #000;
+    position: absolute;
+    left: 2rem;
+    top: 50%;
+    transform: translate(0, -50%)
+}
+
+h1 {
+    font-family: 'Inria Sans', sans-serif;
+    font-weight: 700;
+    font-size: 6.5vmin;
+    width: 85%;
+    color: #000;
+    margin-left: 2rem;
+    margin-top: 2rem;
+}
+
+.info {
+    margin-left: 2rem;
+    margin-top: 2rem;
+    padding: 0.5rem 0.5rem 0.1rem 0.5rem;
+    width: 75%;
+    border: 1px solid black;
+    border-radius: 1rem;
+    font-family: 'Inria Sans', sans-serif;
+    font-size: 2.5vmin;
+    font-weight: normal;
+}
+
+.blk-btn {
+    background-color: #000000;
+    border-radius: 5em;
+    padding: 0.2em 1.2em;
+    color: #ABF8F4;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    font-family: 'Inria Sans', sans-serif;
+    font-weight: 700;
+    font-size: 2.5vmin;
+}
+
+.blk-btn:hover {
+    filter: brightness(115%);
+    box-shadow: 0 6px 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.start {
+    margin-left: 2rem;
+    margin-top: 2rem;
+}
+
+.subinfo {
+    width: 100%;
+    margin-top: 2rem;
+    border: 2px solid black;
+    border-radius: 2em 2em 0 0;
+    display: inline-flex;
+}
+
+.subinfo > div {
+    display: inline-block;
+    width: 50%;
+    padding: 2em;
+}
+
+.tech {
+    border-right: 1px solid black;
+}
+
+.input {
+    border-left: 1px solid black;
+}
+
+.subinfo h2 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: bold;
+    font-size: 4vmin;
+    text-align: center;
+}
+
+.download {
+    display: block;
+    margin: 0 auto;
+}

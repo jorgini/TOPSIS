@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"webApp/app/configs"
-	"webApp/app/entity"
+	"webApp/configs"
+	"webApp/entity"
 )
 
 type SessionDao struct {

@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"github.com/jmoiron/sqlx"
-	"webApp/app/configs"
-	"webApp/app/entity"
+	"webApp/configs"
+	"webApp/entity"
 	"webApp/lib/eval"
 	"webApp/lib/matrix"
 )

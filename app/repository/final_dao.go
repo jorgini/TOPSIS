@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"webApp/app/configs"
-	"webApp/app/entity"
+	"webApp/configs"
+	"webApp/entity"
 )
 
 type FinalDao struct {

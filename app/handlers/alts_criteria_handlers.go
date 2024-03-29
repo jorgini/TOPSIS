@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"strconv"
-	"webApp/app/entity"
+	"webApp/entity"
 )
 
 func (h *Handler) SetAlternatives(c *fiber.Ctx) error {

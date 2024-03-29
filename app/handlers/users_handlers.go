@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"time"
-	"webApp/app/entity"
+	"webApp/entity"
 )
 
 func (h *Handler) CreateNewUser(c *fiber.Ctx) error {

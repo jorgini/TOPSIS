@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"webApp/app/entity"
-	"webApp/app/repository"
+	"webApp/entity"
+	"webApp/repository"
 )
 
 const (

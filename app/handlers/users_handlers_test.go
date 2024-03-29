@@ -12,10 +12,10 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-	"webApp/app/configs"
-	"webApp/app/entity"
-	"webApp/app/usecase"
-	mock_service "webApp/app/usecase/mocks"
+	"webApp/configs"
+	"webApp/entity"
+	"webApp/usecase"
+	mock_service "webApp/usecase/mocks"
 )
 
 func TestHandler_CreateNewUser(t *testing.T) {

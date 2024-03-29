@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 	"errors"
-	"webApp/app/entity"
-	"webApp/app/repository"
+	"webApp/entity"
 	"webApp/lib/eval"
+	"webApp/repository"
 )
 
 type TaskService struct {

@@ -5,9 +5,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"math/rand"
 	"time"
-	"webApp/app/configs"
-	"webApp/app/entity"
-	"webApp/app/repository"
+	"webApp/configs"
+	"webApp/entity"
+	"webApp/repository"
 )
 
 const (

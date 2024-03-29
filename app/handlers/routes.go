@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
-	"webApp/app/configs"
-	"webApp/app/usecase"
+	"webApp/configs"
+	"webApp/usecase"
 )
 
 type Handler struct {

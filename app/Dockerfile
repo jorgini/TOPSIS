@@ -12,8 +12,7 @@ RUN go install github.com/cosmtrek/air@latest
 
 EXPOSE 3030
 
-COPY lib ./lib
-COPY app ./app
+COPY ./ ./
 
-WORKDIR /usr/src/webApp/app/cmd
+WORKDIR /usr/src/webApp/cmd
 CMD ["air"]

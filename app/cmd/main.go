@@ -6,14 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"webApp/app/configs"
-	"webApp/app/handlers"
-	"webApp/app/usecase"
+	"webApp/configs"
+	"webApp/handlers"
+	"webApp/usecase"
 )
-
-/* TODO
-собрать всю бизнес логику и структуры в entity
-*/
 
 func main() {
 	app := fiber.New(fiber.Config{})

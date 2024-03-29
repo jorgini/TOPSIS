@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"strings"
-	"webApp/app/configs"
-	"webApp/app/entity"
+	"webApp/configs"
+	"webApp/entity"
 )
 
 type UserDao struct {
