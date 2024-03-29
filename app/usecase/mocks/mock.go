@@ -12,10 +12,10 @@ package mock_usecase
 import (
 	context "context"
 	reflect "reflect"
-	configs "webApp/app/configs"
-	entity "webApp/app/entity"
-	usecase "webApp/app/usecase"
+	configs "webApp/configs"
+	entity "webApp/entity"
 	eval "webApp/lib/eval"
+	usecase "webApp/usecase"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -73,25 +73,25 @@ func (mr *MockUserMockRecorder) DeleteUser(ctx, uid any) *gomock.Call {
 }
 
 // GetUID mocks base method.
-func (m *MockUser) GetUID(ctx context.Context, email, password string) (int64, error) {
+func (m *MockUser) GetUID(ctx context.Context, user *entity.UserModel) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUID", ctx, email, password)
+	ret := m.ctrl.Call(m, "GetUID", ctx, user)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUID indicates an expected call of GetUID.
-func (mr *MockUserMockRecorder) GetUID(ctx, email, password any) *gomock.Call {
+func (mr *MockUserMockRecorder) GetUID(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUID", reflect.TypeOf((*MockUser)(nil).GetUID), ctx, email, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUID", reflect.TypeOf((*MockUser)(nil).GetUID), ctx, user)
 }
 
 // GetUsersRelateToTask mocks base method.
-func (m *MockUser) GetUsersRelateToTask(ctx context.Context, sid int64) ([]string, error) {
+func (m *MockUser) GetUsersRelateToTask(ctx context.Context, sid int64) ([]entity.Expert, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsersRelateToTask", ctx, sid)
-	ret0, _ := ret[0].([]string)
+	ret0, _ := ret[0].([]entity.Expert)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -459,6 +459,35 @@ func (mr *MockMatrixMockRecorder) CreateMatrix(ctx, uid, sid any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMatrix", reflect.TypeOf((*MockMatrix)(nil).CreateMatrix), ctx, uid, sid)
 }
 
+// DeactivateStatuses mocks base method.
+func (m *MockMatrix) DeactivateStatuses(ctx context.Context, sid int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeactivateStatuses", ctx, sid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeactivateStatuses indicates an expected call of DeactivateStatuses.
+func (mr *MockMatrixMockRecorder) DeactivateStatuses(ctx, sid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateStatuses", reflect.TypeOf((*MockMatrix)(nil).DeactivateStatuses), ctx, sid)
+}
+
+// GetExpertsRelateToTask mocks base method.
+func (m *MockMatrix) GetExpertsRelateToTask(ctx context.Context, sid int64) ([]entity.ExpertStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExpertsRelateToTask", ctx, sid)
+	ret0, _ := ret[0].([]entity.ExpertStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExpertsRelateToTask indicates an expected call of GetExpertsRelateToTask.
+func (mr *MockMatrixMockRecorder) GetExpertsRelateToTask(ctx, sid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExpertsRelateToTask", reflect.TypeOf((*MockMatrix)(nil).GetExpertsRelateToTask), ctx, sid)
+}
+
 // GetMID mocks base method.
 func (m *MockMatrix) GetMID(ctx context.Context, uid, sid int64) (int64, error) {
 	m.ctrl.T.Helper()
@@ -489,19 +518,32 @@ func (mr *MockMatrixMockRecorder) GetRatings(ctx, uid, sid, ord any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRatings", reflect.TypeOf((*MockMatrix)(nil).GetRatings), ctx, uid, sid, ord)
 }
 
-// GetUIDsRelateToTask mocks base method.
-func (m *MockMatrix) GetUIDsRelateToTask(ctx context.Context, sid int64) ([]int64, error) {
+// IsAllStatusesComplete mocks base method.
+func (m *MockMatrix) IsAllStatusesComplete(ctx context.Context, sid int64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUIDsRelateToTask", ctx, sid)
-	ret0, _ := ret[0].([]int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "IsAllStatusesComplete", ctx, sid)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GetUIDsRelateToTask indicates an expected call of GetUIDsRelateToTask.
-func (mr *MockMatrixMockRecorder) GetUIDsRelateToTask(ctx, sid any) *gomock.Call {
+// IsAllStatusesComplete indicates an expected call of IsAllStatusesComplete.
+func (mr *MockMatrixMockRecorder) IsAllStatusesComplete(ctx, sid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUIDsRelateToTask", reflect.TypeOf((*MockMatrix)(nil).GetUIDsRelateToTask), ctx, sid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAllStatusesComplete", reflect.TypeOf((*MockMatrix)(nil).IsAllStatusesComplete), ctx, sid)
+}
+
+// SetStatusComplete mocks base method.
+func (m *MockMatrix) SetStatusComplete(ctx context.Context, mid int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetStatusComplete", ctx, mid)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetStatusComplete indicates an expected call of SetStatusComplete.
+func (mr *MockMatrixMockRecorder) SetStatusComplete(ctx, mid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusComplete", reflect.TypeOf((*MockMatrix)(nil).SetStatusComplete), ctx, mid)
 }
 
 // UpdateMatrix mocks base method.

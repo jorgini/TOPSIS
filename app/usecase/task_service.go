@@ -183,7 +183,7 @@ func (t *TaskService) ConnectToTask(ctx context.Context, sid int64, password str
 }
 
 func (t *TaskService) SetExpertsWeights(ctx context.Context, sid int64, weights entity.Weights) error {
-	experts, err := t.matrixRepo.GetUIDsRelateToTask(ctx, sid)
+	experts, err := t.matrixRepo.GetExpertsRelateToTask(ctx, sid)
 	if err != nil {
 		return err
 	}

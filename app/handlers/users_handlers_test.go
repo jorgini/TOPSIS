@@ -31,8 +31,9 @@ func TestHandler_CreateNewUser(t *testing.T) {
 	}{
 		{
 			name:      "Ok",
-			inputBody: `{"email": "test", "password": "test"}`,
+			inputBody: `{"login": "login", "email": "test", "password": "test"}`,
 			inputUser: entity.UserModel{
+				Login:    "login",
 				Email:    "test",
 				Password: "test",
 			},
@@ -54,8 +55,9 @@ func TestHandler_CreateNewUser(t *testing.T) {
 		},
 		{
 			name:      "Service Error",
-			inputBody: `{"email": "test", "password": "test"}`,
+			inputBody: `{"login": "login", "email": "test", "password": "test"}`,
 			inputUser: entity.UserModel{
+				Login:    "login",
 				Email:    "test",
 				Password: "test",
 			},
@@ -112,7 +114,7 @@ func TestHandler_CreateNewUser(t *testing.T) {
 func TestHandler_LogIn(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r1 *mock_service.MockUser, r2 *mock_service.MockSession, di *mock_service.MockDiService,
-		user entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens)
+		user *entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens)
 
 	tests := []struct {
 		name                 string
@@ -140,9 +142,33 @@ func TestHandler_LogIn(t *testing.T) {
 				CookieName: "cookie",
 			},
 			mockBehavior: func(r1 *mock_service.MockUser, r2 *mock_service.MockSession, di *mock_service.MockDiService,
-				user entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
+				user *entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
 				di.EXPECT().GetInstanceService().Return(svc)
-				r1.EXPECT().GetUID(context.Background(), user.Email, user.Password).Return(int64(1), nil)
+				r1.EXPECT().GetUID(context.Background(), user).Return(int64(1), nil)
+				r2.EXPECT().GenerateToken(context.Background(), int64(1), cfg).Return(tokens, nil)
+			},
+			expectedStatusCode:   200,
+			expectedResponseBody: `{"token":"access"}`,
+			expectedCookie:       1,
+		},
+		{
+			name:      "Ok",
+			inputBody: `{"login": "test", "password": "test"}`,
+			inputUser: entity.UserModel{
+				Login:    "test",
+				Password: "test",
+			},
+			tokens: entity.Tokens{
+				Access:  "access",
+				Refresh: "refresh",
+			},
+			cfg: &configs.AppConfig{
+				CookieName: "cookie",
+			},
+			mockBehavior: func(r1 *mock_service.MockUser, r2 *mock_service.MockSession, di *mock_service.MockDiService,
+				user *entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
+				di.EXPECT().GetInstanceService().Return(svc)
+				r1.EXPECT().GetUID(context.Background(), user).Return(int64(1), nil)
 				r2.EXPECT().GenerateToken(context.Background(), int64(1), cfg).Return(tokens, nil)
 			},
 			expectedStatusCode:   200,
@@ -151,13 +177,13 @@ func TestHandler_LogIn(t *testing.T) {
 		},
 		{
 			name:      "Wrong Input",
-			inputBody: `{"email": "test"}`,
+			inputBody: `{"password": "qwerty"}`,
 			inputUser: entity.UserModel{},
 			mockBehavior: func(r1 *mock_service.MockUser, r2 *mock_service.MockSession, di *mock_service.MockDiService,
-				user entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
+				user *entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
 			},
 			expectedStatusCode:   400,
-			expectedResponseBody: `{"message":"invalid input data for sign up"}`,
+			expectedResponseBody: `{"message":"empty input"}`,
 			expectedCookie:       0,
 		},
 		{
@@ -168,9 +194,9 @@ func TestHandler_LogIn(t *testing.T) {
 				Password: "test",
 			},
 			mockBehavior: func(r1 *mock_service.MockUser, r2 *mock_service.MockSession, di *mock_service.MockDiService,
-				user entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
+				user *entity.UserModel, svc *usecase.Service, cfg *configs.AppConfig, tokens entity.Tokens) {
 				di.EXPECT().GetInstanceService().Return(svc)
-				r1.EXPECT().GetUID(context.Background(), user.Email, user.Password).Return(int64(1), nil)
+				r1.EXPECT().GetUID(context.Background(), user).Return(int64(1), nil)
 				r2.EXPECT().GenerateToken(context.Background(), int64(1), cfg).Return(tokens, errors.New("something went wrong"))
 			},
 			expectedStatusCode:   401,
@@ -190,7 +216,7 @@ func TestHandler_LogIn(t *testing.T) {
 			di := mock_service.NewMockDiService(c)
 
 			svc := usecase.Service{User: userRepo, Session: sessionRepo}
-			test.mockBehavior(userRepo, sessionRepo, di, test.inputUser, &svc, test.cfg, test.tokens)
+			test.mockBehavior(userRepo, sessionRepo, di, &test.inputUser, &svc, test.cfg, test.tokens)
 
 			handler := Handler{di: di, cfg: test.cfg}
 

@@ -1008,7 +1008,7 @@ func TestHandler_SetExpertsWeights(t *testing.T) {
 func TestHandler_GetExperts(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-		task *entity.TaskModel, svc *usecase.Service)
+		task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service)
 
 	type InReq struct {
 		Weights entity.Weights `json:"weights"`
@@ -1019,6 +1019,7 @@ func TestHandler_GetExperts(t *testing.T) {
 		paramsName           string
 		userIdentify         func(c *fiber.Ctx) (int64, error)
 		outTask              entity.TaskModel
+		outExperts           []entity.Expert
 		mockBehavior         mockBehavior
 		expectedStatusCode   int
 		expectedResponseBody string
@@ -1032,15 +1033,18 @@ func TestHandler_GetExperts(t *testing.T) {
 			outTask: entity.TaskModel{
 				TaskType: v.Group,
 			},
+			outExperts: []entity.Expert{
+				{Login: "user1", Status: entity.Draft},
+				{Login: "user2", Status: entity.Complete},
+			},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
 				r.EXPECT().ValidateUser(context.Background(), int64(1), int64(1)).Return(nil)
 				r.EXPECT().GetTask(context.Background(), int64(1)).Return(task, nil)
-				u.EXPECT().GetUsersRelateToTask(context.Background(), int64(1)).Return([]string{"user1", "user2"}, nil)
+				u.EXPECT().GetUsersRelateToTask(context.Background(), int64(1)).Return(experts, nil)
 			},
-			expectedStatusCode:   200,
-			expectedResponseBody: `["user1","user2"]`,
+			expectedStatusCode: 200,
 		},
 		{
 			name:       "Task type error",
@@ -1052,7 +1056,7 @@ func TestHandler_GetExperts(t *testing.T) {
 				TaskType: v.Individuals,
 			},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
 				r.EXPECT().ValidateUser(context.Background(), int64(1), int64(1)).Return(nil)
 				r.EXPECT().GetTask(context.Background(), int64(1)).Return(task, nil)
@@ -1068,7 +1072,7 @@ func TestHandler_GetExperts(t *testing.T) {
 			},
 			outTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 			},
 			expectedStatusCode:   400,
 			expectedResponseBody: `{"message":"task doesnt specified"}`,
@@ -1081,7 +1085,7 @@ func TestHandler_GetExperts(t *testing.T) {
 			},
 			outTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
 				r.EXPECT().ValidateUser(context.Background(), int64(1), int64(1)).Return(errors.New("forbidden"))
 			},
@@ -1096,7 +1100,7 @@ func TestHandler_GetExperts(t *testing.T) {
 			},
 			outTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 			},
 			expectedStatusCode:   500,
 			expectedResponseBody: `{"message":"cant read id"}`,
@@ -1111,7 +1115,7 @@ func TestHandler_GetExperts(t *testing.T) {
 				TaskType: v.Group,
 			},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
 				r.EXPECT().ValidateUser(context.Background(), int64(1), int64(1)).Return(nil)
 				r.EXPECT().GetTask(context.Background(), int64(1)).Return(task, nil)
@@ -1128,7 +1132,7 @@ func TestHandler_GetExperts(t *testing.T) {
 			},
 			outTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, u *mock_service.MockUser, di *mock_service.MockDiService,
-				task *entity.TaskModel, svc *usecase.Service) {
+				task *entity.TaskModel, experts []entity.Expert, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
 				r.EXPECT().ValidateUser(context.Background(), int64(1), int64(1)).Return(nil)
 				r.EXPECT().GetTask(context.Background(), int64(1)).Return(nil, errors.New("something went wrong"))
@@ -1149,7 +1153,7 @@ func TestHandler_GetExperts(t *testing.T) {
 			di := mock_service.NewMockDiService(c)
 
 			svc := usecase.Service{Task: repo, User: userRepo}
-			test.mockBehavior(repo, userRepo, di, &test.outTask, &svc)
+			test.mockBehavior(repo, userRepo, di, &test.outTask, test.outExperts, &svc)
 
 			handler := Handler{di: di, userIdentity: test.userIdentify}
 
@@ -1173,6 +1177,13 @@ func TestHandler_GetExperts(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			if test.expectedResponseBody == "" {
+				data, err := json.Marshal(test.outExperts)
+				if err != nil {
+					t.Fatal(err)
+				}
+				test.expectedResponseBody = string(data)
+			}
 			// Assert
 			assert.Equal(t, test.expectedStatusCode, w.StatusCode)
 			assert.Equal(t, test.expectedResponseBody, resp)
