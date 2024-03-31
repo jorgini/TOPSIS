@@ -78,6 +78,7 @@ func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (in
 		return 0, errors.New("cant connect to db")
 	}
 
+	logrus.Info(user.Login)
 	row := conn.QueryRowxContext(ctx, query, user.Login, user.Email, user.Password)
 	if err := row.Scan(&uid); err != nil {
 		return 0, errors.Join(err, u.c.closeConnection())
@@ -110,9 +111,10 @@ func (u *UserDao) UpdateUser(ctx context.Context, uid int64, user *entity.UserMo
 		return errors.New("cant connect to db")
 	}
 
-	_, err := conn.ExecContext(ctx, query, append(getUserUpdateArgs(user), uid)...)
-	if err != nil {
+	if result, err := conn.ExecContext(ctx, query, append(getUserUpdateArgs(user), uid)...); err != nil {
 		return errors.Join(err, u.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), u.c.closeConnection())
 	}
 	return u.c.closeConnection()
 }
@@ -125,9 +127,10 @@ func (u *UserDao) DeleteUser(ctx context.Context, uid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	_, err := conn.ExecContext(ctx, query, uid)
-	if err != nil {
+	if result, err := conn.ExecContext(ctx, query, uid); err != nil {
 		return errors.Join(err, u.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), u.c.closeConnection())
 	}
 	return u.c.closeConnection()
 }

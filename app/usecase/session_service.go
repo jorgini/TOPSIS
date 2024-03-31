@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 	"webApp/configs"
@@ -37,7 +38,7 @@ func (s *SessionService) GenerateToken(ctx context.Context, uid int64, cfg *conf
 		return entity.Tokens{}, err
 	}
 
-	refresh := make([]byte, 32)
+	refresh := make([]byte, 64)
 	gen := rand.New(rand.NewSource(time.Now().Unix()))
 	for i := range refresh {
 		refresh[i] = charset[gen.Intn(len(charset))]
@@ -47,6 +48,10 @@ func (s *SessionService) GenerateToken(ctx context.Context, uid int64, cfg *conf
 		Uid:       uid,
 		Token:     string(refresh),
 		ExpiredAt: time.Now().Add(cfg.RefreshTTL),
+	}
+
+	if err := s.repo.UpdateRefreshToken(ctx, session); err == nil {
+		return entity.Tokens{Access: access, Refresh: string(refresh)}, nil
 	}
 
 	if err := s.repo.InsertRefreshToken(ctx, session); err != nil {
@@ -59,6 +64,7 @@ func (s *SessionService) GenerateToken(ctx context.Context, uid int64, cfg *conf
 func (s *SessionService) RefreshToken(ctx context.Context, refresh string, cfg *configs.AppConfig) (entity.Tokens, error) {
 	uid, err := s.repo.GetUIDByToken(ctx, refresh)
 	if err != nil {
+		logrus.Error("here")
 		return entity.Tokens{}, err
 	}
 

@@ -20,6 +20,7 @@ type User interface {
 type Session interface {
 	GetUIDByToken(ctx context.Context, refresh string) (int64, error)
 	InsertRefreshToken(ctx context.Context, refresh entity.Session) error
+	UpdateRefreshToken(ctx context.Context, refresh entity.Session) error
 }
 
 type Task interface {

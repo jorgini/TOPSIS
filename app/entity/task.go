@@ -28,7 +28,7 @@ type TaskModel struct {
 	LingScale      eval.LinguisticScale `json:"ling_scale" db:"ling_scale"`
 	Alternatives   Alts                 `json:"alternatives" db:"alternatives"`
 	Criteria       Criteria             `json:"criteria" db:"criteria"`
-	ExpertsWeights Weights              `json:"experts_weights"`
+	ExpertsWeights Weights              `json:"experts_weights" db:"experts_weights"`
 	Status         bool                 `json:"status" db:"status"`
 }
 

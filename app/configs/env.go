@@ -44,8 +44,8 @@ func SetConfig() *Config {
 	if err != nil {
 		logrus.Fatal("Error loading .env file")
 	}
-	AccessTtl := time.Minute * 120
-	RefreshTtl := time.Hour * 48
+	AccessTtl := time.Minute * 15
+	RefreshTtl := time.Hour * 360
 	return &Config{
 		PgClientCfg: PgClientCfg{Host: os.Getenv("PGHOST"), Port: os.Getenv("PGPORT"),
 			User: os.Getenv("PGUSER"), Password: os.Getenv("PGPASS"), Database: os.Getenv("PGDB")},

@@ -47,8 +47,7 @@ func (m *MatrixDao) DeleteDependencies(ctx context.Context, sid, mainUid int64) 
 		return errors.New("cant connect to db")
 	}
 
-	_, err := conn.ExecContext(ctx, query, sid, mainUid)
-	if err != nil {
+	if _, err := conn.ExecContext(ctx, query, sid, mainUid); err != nil {
 		return errors.Join(err, m.c.closeConnection())
 	}
 	return m.c.closeConnection()
@@ -116,8 +115,10 @@ func (m *MatrixDao) DeleteMatrix(ctx context.Context, uid, sid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, uid, sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, uid, sid); err != nil {
 		return errors.Join(err, m.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to delete"), m.c.closeConnection())
 	}
 	return m.c.closeConnection()
 }
@@ -215,8 +216,10 @@ func (m *MatrixDao) SetStatusComplete(ctx context.Context, mid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, entity.Complete, mid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, entity.Complete, mid); err != nil {
 		return errors.Join(err, m.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), m.c.closeConnection())
 	}
 	return m.c.closeConnection()
 }
@@ -229,7 +232,7 @@ func (m *MatrixDao) DeactivateStatuses(ctx context.Context, sid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, sid); err != nil {
+	if _, err := conn.ExecContext(ctx, query, entity.Draft, sid); err != nil {
 		return errors.Join(err, m.c.closeConnection())
 	}
 	return m.c.closeConnection()

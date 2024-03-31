@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"webApp/entity"
 	"webApp/repository"
 )
@@ -32,6 +33,10 @@ func (f *FinalService) SetFinal(ctx context.Context, final *entity.FinalModel) e
 	return f.repo.SetFinal(ctx, final)
 }
 
+func (f *FinalService) UpdateFinal(ctx context.Context, final *entity.FinalModel) error {
+	return f.repo.UpdateFinal(ctx, final)
+}
+
 func (f *FinalService) PresentFinal(ctx context.Context, sid int64, threshold float64) (*entity.FinalModel, error) {
 	task, err := f.taskRepo.GetTask(ctx, sid)
 	if err != nil {
@@ -40,12 +45,13 @@ func (f *FinalService) PresentFinal(ctx context.Context, sid int64, threshold fl
 
 	prev, err := f.GetFinal(ctx, sid)
 	if err == nil {
-		if task.LastChangesAt.Before(prev.LastChange) && (threshold == prev.Threshold || threshold == -1) {
+		logrus.Info()
+		if task.LastChangesAt.Before(prev.LastChange) && (threshold == prev.Threshold || threshold == 0) {
 			return prev, nil
 		}
 	}
 
-	if threshold == -1 {
+	if threshold == 0 {
 		if err == nil {
 			threshold = prev.Threshold
 		} else {
@@ -62,5 +68,9 @@ func (f *FinalService) PresentFinal(ctx context.Context, sid int64, threshold fl
 	if err != nil {
 		return nil, err
 	}
-	return result, f.SetFinal(ctx, result)
+	if prev == nil {
+		return result, f.SetFinal(ctx, result)
+	} else {
+		return result, f.UpdateFinal(ctx, result)
+	}
 }

@@ -49,3 +49,19 @@ func (s *SessionDao) InsertRefreshToken(ctx context.Context, refresh entity.Sess
 	}
 	return s.c.closeConnection()
 }
+
+func (s *SessionDao) UpdateRefreshToken(ctx context.Context, refresh entity.Session) error {
+	query := fmt.Sprintf("UPDATE %s SET token=$1, exp_at=$2 WHERE uid=$3", s.cfg.SessionTable)
+
+	conn := s.c.getConnection()
+	if conn == nil {
+		return errors.New("cant connect to db")
+	}
+
+	if result, err := conn.ExecContext(ctx, query, refresh.Token, refresh.ExpiredAt, refresh.Uid); err != nil {
+		return errors.Join(err, s.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), s.c.closeConnection())
+	}
+	return s.c.closeConnection()
+}

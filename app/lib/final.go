@@ -77,6 +77,7 @@ func SensAnalysis(method v.Method, calcSettings int64, threshold float64, mxs []
 	settings.Parse(calcSettings)
 
 	result := SensitivityResult{Results: make([][]eval.Rating, 10), Threshold: threshold}
+	gen := rand.New(rand.NewSource(time.Now().Unix()))
 	var err error
 	var wg sync.WaitGroup
 	wg.Add(10)
@@ -84,19 +85,13 @@ func SensAnalysis(method v.Method, calcSettings int64, threshold float64, mxs []
 		go func(i int) {
 			defer wg.Done()
 
-			var wg2 sync.WaitGroup
 			changeMatrices := make([]matrix.Matrix, len(mxs))
 			weights := make([]eval.Evaluated, len(w))
-			wg2.Add(len(mxs))
 			for i := range changeMatrices {
-				go func(i int) {
-					defer wg2.Done()
-					weights[i] = w[i]
-					changeMatrices[i] = RandomChange(&mxs[i], threshold)
-				}(i)
+				weights[i] = w[i].Evaluated
+				changeMatrices[i] = RandomChange(&mxs[i], threshold, gen)
 			}
 
-			wg2.Wait()
 			var inerr error
 			if method == v.TOPSIS {
 				result.Results[i], inerr = TopsisFullCalc(settings, changeMatrices, weights)
@@ -124,10 +119,9 @@ func SensAnalysis(method v.Method, calcSettings int64, threshold float64, mxs []
 	return &result, nil
 }
 
-func RandomChange(m *matrix.Matrix, threshold float64) matrix.Matrix {
+func RandomChange(m *matrix.Matrix, threshold float64, gen *rand.Rand) matrix.Matrix {
 	newMatrix := matrix.NewMatrix(m.CountAlternatives, m.CountCriteria)
 
-	gen := rand.New(rand.NewSource(time.Now().Unix()))
 	for i := range newMatrix.Data {
 		for j := range newMatrix.Data[i].Grade {
 			gap := gen.Float64() * threshold
@@ -137,6 +131,7 @@ func RandomChange(m *matrix.Matrix, threshold float64) matrix.Matrix {
 			_ = newMatrix.SetValue(m.Data[i].Grade[j].Weighted(eval.Number(1+gap)), i, j)
 		}
 	}
+	_ = newMatrix.SetCriteria(m.Criteria)
 	return *newMatrix
 }
 
@@ -163,7 +158,7 @@ func TopsisFullCalc(settings CalcSettings, mxs []matrix.Matrix, weights []eval.E
 			return nil, err
 		}
 
-		resultMatrix.CalcWeightedMatrix()
+		resultMatrix.CalcCloseness()
 		return resultMatrix.GetCoefs(), nil
 	} else if settings.Aggregating == v.AggregateDist {
 		matrices := make([]topsis.TopsisMatrix, len(mxs))

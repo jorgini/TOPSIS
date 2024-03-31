@@ -8,7 +8,7 @@ CREATE TABLE users
 
 CREATE TABLE sessions
 (
-    uid    integer      not null,
+    uid    integer      not null unique,
     token  varchar(255) not null unique,
     exp_at timestamp    not null,
     FOREIGN KEY (uid) REFERENCES users (uid) ON DELETE CASCADE
@@ -26,7 +26,7 @@ CREATE TABLE tasks
     CHECK (task_type = 'group' OR task_type = 'individuals'),
     method          varchar(255) not null,
     CHECK (method = 'topsis' OR method = 'smart'),
-    calc_settings   integer      not null,
+    calc_settings   bigint      not null,
     ling_scale      json         not null,
     alternatives    json,
     criteria        json,

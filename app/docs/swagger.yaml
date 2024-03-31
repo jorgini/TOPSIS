@@ -1,0 +1,1147 @@
+basePath: /
+definitions:
+  controller.ConnectInput:
+    properties:
+      password:
+        type: string
+      sid:
+        type: integer
+    type: object
+  controller.PasswordInput:
+    properties:
+      password:
+        type: string
+    type: object
+  controller.RatingsInput:
+    properties:
+      ratings:
+        items:
+          $ref: '#/definitions/eval.Rating'
+        type: array
+    type: object
+  controller.TaskInput:
+    properties:
+      calc_settings:
+        type: integer
+      description:
+        type: string
+      ling_scale:
+        $ref: '#/definitions/eval.LinguisticScale'
+      method:
+        type: string
+      task_type:
+        type: string
+      title:
+        type: string
+    type: object
+  controller.ThresholdInput:
+    properties:
+      threshold:
+        type: number
+    type: object
+  controller.UserInput:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  controller.response:
+    properties:
+      message:
+        type: string
+    type: object
+  entity.AlternativeModel:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  entity.CriterionModel:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      type_of_criterion:
+        type: boolean
+      weight:
+        $ref: '#/definitions/eval.Rating'
+    type: object
+  entity.Expert:
+    properties:
+      login:
+        type: string
+      status:
+        type: boolean
+    type: object
+  entity.FinalModel:
+    properties:
+      fid:
+        type: integer
+      last_change:
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/eval.Rating'
+        type: array
+      sens_analysis:
+        $ref: '#/definitions/lib.SensitivityResult'
+      threshold:
+        type: number
+    type: object
+  entity.TaskShortCard:
+    properties:
+      description:
+        type: string
+      last_change:
+        type: string
+      method:
+        type: string
+      status:
+        type: boolean
+      taskType:
+        type: string
+      title:
+        type: string
+    type: object
+  entity.UserModel:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+      uid:
+        type: integer
+    type: object
+  eval.LinguisticScale:
+    properties:
+      marks:
+        items:
+          type: string
+        type: array
+      ratings:
+        items:
+          $ref: '#/definitions/eval.Rating'
+        type: array
+    type: object
+  eval.Rating:
+    properties:
+      eval: {}
+    type: object
+  lib.SensitivityResult:
+    properties:
+      results:
+        items:
+          items:
+            $ref: '#/definitions/eval.Rating'
+          type: array
+        type: array
+      threshold:
+        type: number
+    type: object
+host: localhost:3030
+info:
+  contact: {}
+  description: RESTful API for program implementation MCDM methods TOPSIS and SMART
+  title: Decision Maker APi
+paths:
+  /auth/log-in:
+    post:
+      consumes:
+      - application/json
+      description: log-in for user
+      operationId: log-in
+      parameters:
+      - description: account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controller.response'
+      summary: Log-In
+      tags:
+      - auth
+  /auth/refresh:
+    put:
+      consumes:
+      - application/json
+      description: refresh tokens for identify user
+      operationId: refresh-token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      summary: RefreshToken
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: sign-up for new user
+      operationId: sign-up
+      parameters:
+      - description: account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/entity.UserModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      summary: Sign-Up
+      tags:
+      - auth
+  /solution/alternatives:
+    get:
+      consumes:
+      - application/json
+      description: gets alternatives to current task
+      operationId: get-alts
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.AlternativeModel'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetAlternatives
+      tags:
+      - alternatives
+    post:
+      consumes:
+      - application/json
+      description: sets alternatives to current task
+      operationId: set-alts
+      parameters:
+      - description: alternatives info
+        in: body
+        name: input
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entity.AlternativeModel'
+          type: array
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: SetAlternatives
+      tags:
+      - alternatives
+    put:
+      consumes:
+      - application/json
+      description: updates alternatives to current task
+      operationId: update-alts
+      parameters:
+      - description: alternatives info
+        in: body
+        name: input
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entity.AlternativeModel'
+          type: array
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: ReplaceAlternatives
+      tags:
+      - alternatives
+  /solution/connect:
+    get:
+      consumes:
+      - application/json
+      description: connects new user to current task
+      operationId: connect-to-task
+      parameters:
+      - description: info for connection
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ConnectInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: ConnectToTask
+      tags:
+      - task
+  /solution/criteria:
+    get:
+      consumes:
+      - application/json
+      description: gets criteria to current task
+      operationId: get-criteria
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.CriterionModel'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetCriteria
+      tags:
+      - criteria
+    post:
+      consumes:
+      - application/json
+      description: sets criteria to current task
+      operationId: set-criteria
+      parameters:
+      - description: criteria info
+        in: body
+        name: input
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entity.CriterionModel'
+          type: array
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: SetCriteria
+      tags:
+      - criteria
+    put:
+      consumes:
+      - application/json
+      description: updates criteria to current task
+      operationId: update-criteria
+      parameters:
+      - description: criteria info
+        in: body
+        name: input
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/entity.CriterionModel'
+          type: array
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: ReplaceCriteria
+      tags:
+      - criteria
+  /solution/experts:
+    get:
+      consumes:
+      - application/json
+      description: gets experts of current group task
+      operationId: get-experts
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Expert'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetExperts
+      tags:
+      - task
+    put:
+      consumes:
+      - application/json
+      description: sets experts weights for current group task
+      operationId: set-experts-weight
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      - description: weights of experts
+        in: body
+        name: input
+        schema:
+          items:
+            $ref: '#/definitions/eval.Rating'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: SetExpertsWeights
+      tags:
+      - task
+  /solution/final:
+    post:
+      consumes:
+      - application/json
+      description: gets final report
+      operationId: get-final
+      parameters:
+      - description: threshold for sensitivity analysis
+        in: body
+        name: input
+        schema:
+          $ref: '#/definitions/controller.ThresholdInput'
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.FinalModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetFinal
+      tags:
+      - final
+  /solution/rating:
+    get:
+      consumes:
+      - application/json
+      description: gets ratings on current alternative in matrix
+      operationId: get-ratings
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      - description: order of alternative
+        in: query
+        name: ord
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.RatingsInput'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetRatings
+      tags:
+      - matrix
+    post:
+      consumes:
+      - application/json
+      description: creates new matrix for evaluating
+      operationId: create-matrix
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: CreateMatrix
+      tags:
+      - matrix
+    put:
+      consumes:
+      - application/json
+      description: updates ratings in matrix
+      operationId: update-matrix
+      parameters:
+      - description: ratings to update
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.RatingsInput'
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      - description: order of alternative
+        in: query
+        name: ord
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: UpdateMatrix
+      tags:
+      - matrix
+  /solution/rating/complete:
+    patch:
+      consumes:
+      - application/json
+      description: set status complete for current matrix
+      operationId: set-complete
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: CompleteStatus
+      tags:
+      - matrix
+  /solution/settings:
+    get:
+      consumes:
+      - application/json
+      description: gets options of current task
+      operationId: get-task
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.TaskInput'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetTask
+      tags:
+      - task
+    post:
+      consumes:
+      - application/json
+      description: creates new task with required options
+      operationId: create-task
+      parameters:
+      - description: task options
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.TaskInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: CreateTask
+      tags:
+      - task
+    put:
+      consumes:
+      - application/json
+      description: updates options for current task
+      operationId: update-task
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      - description: task options
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.TaskInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: UpdateTask
+      tags:
+      - task
+  /solution/settings/experts:
+    patch:
+      consumes:
+      - application/json
+      description: deactivate statuses of all experts relating to current task if
+        maintainer choose this option
+      operationId: deactivate-statuses
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeactivateStatuses
+      tags:
+      - task
+  /solution/settings/pass:
+    patch:
+      consumes:
+      - application/json
+      description: sets password for current task
+      operationId: set-task-password
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      - description: password for task
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: SetTaskPassword
+      tags:
+      - task
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: get all solutions related to current user
+      operationId: get-all-solutions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.TaskShortCard'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetAllSolutions
+      tags:
+      - user
+  /user/settings:
+    delete:
+      consumes:
+      - application/json
+      description: delete user account
+      operationId: delete-user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteUser
+      tags:
+      - user
+    patch:
+      consumes:
+      - application/json
+      description: update account info
+      operationId: update-user
+      parameters:
+      - description: update account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.response'
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: UpdateUser
+      tags:
+      - user
+  /user/tasks:
+    delete:
+      consumes:
+      - application/json
+      description: deletes current task
+      operationId: delete-task
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteTask
+      tags:
+      - task
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

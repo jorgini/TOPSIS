@@ -2,14 +2,26 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	_ "github.com/gofiber/swagger"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
 	"webApp/configs"
-	"webApp/handlers"
+	"webApp/controller"
+	_ "webApp/docs"
 	"webApp/usecase"
 )
+
+// @title Decision Maker APi
+// @description RESTful API for program implementation MCDM methods TOPSIS and SMART
+
+// @host localhost:3030
+// @BasePath /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	app := fiber.New(fiber.Config{})
@@ -21,7 +33,7 @@ func main() {
 		logrus.Fatal(di.ShutDown())
 	}()
 
-	hand := handlers.NewHandler(di, &config.AppConfig)
+	hand := controller.NewHandler(di, &config.AppConfig)
 
 	app.Route("/", hand.SetAllRoutes)
 

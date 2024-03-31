@@ -37,29 +37,32 @@ func (f *FinalDao) GetFinal(ctx context.Context, sid int64) (*entity.FinalModel,
 }
 
 func (f *FinalDao) SetFinal(ctx context.Context, final *entity.FinalModel) error {
-	query := fmt.Sprintf("INSERT INTO %s (fid, result, sens_analysis, last_change) values ($1, $2, $3, $4)", f.cfg.FinalTable)
+	query := fmt.Sprintf("INSERT INTO %s (fid, result, sens_analysis, threshold, last_change) values ($1, $2, $3, $4, $5)",
+		f.cfg.FinalTable)
 
 	conn := f.c.getConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, final.FID, final.Result, final.SensAnalysis, time.Now()); err != nil {
+	if _, err := conn.ExecContext(ctx, query, final.FID, final.Result, final.SensAnalysis, final.Threshold, time.Now()); err != nil {
 		return errors.Join(err, f.c.closeConnection())
 	}
 	return f.c.closeConnection()
 }
 
 func (f *FinalDao) UpdateFinal(ctx context.Context, final *entity.FinalModel) error {
-	query := fmt.Sprintf("UPDATE %s result=$1, sens_analysis=$2, last_change=$3 WHERE fid=$4", f.cfg.FinalTable)
+	query := fmt.Sprintf("UPDATE %s SET result=$1, sens_analysis=$2, threshold=$3, last_change=$4 WHERE fid=$5", f.cfg.FinalTable)
 
 	conn := f.c.getConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, final.Result, final.SensAnalysis, time.Now(), final.FID); err != nil {
+	if result, err := conn.ExecContext(ctx, query, final.Result, final.SensAnalysis, final.Threshold, time.Now(), final.FID); err != nil {
 		return errors.Join(err, f.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), f.c.closeConnection())
 	}
 	return f.c.closeConnection()
 }

@@ -68,10 +68,12 @@ func (t *TaskDao) UpdateTask(ctx context.Context, sid int64, input *entity.TaskM
 		return errors.New("cant connect to db")
 	}
 
-	_, err := conn.ExecContext(ctx, query, input.Title, input.Description, time.Now(), input.TaskType,
+	result, err := conn.ExecContext(ctx, query, input.Title, input.Description, time.Now(), input.TaskType,
 		input.Method, input.CalcSettings, input.LingScale, entity.Draft, sid)
 	if err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 
 	return t.c.closeConnection()
@@ -100,8 +102,10 @@ func (t *TaskDao) DeleteTask(ctx context.Context, sid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -114,8 +118,10 @@ func (t *TaskDao) SetPassword(ctx context.Context, sid int64, password string) e
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, password, sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, password, sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -128,8 +134,10 @@ func (t *TaskDao) SetCriteria(ctx context.Context, sid int64, criteria entity.Cr
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, criteria, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, criteria, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -142,8 +150,10 @@ func (t *TaskDao) SetAlts(ctx context.Context, sid int64, alts entity.Alts) erro
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, alts, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, alts, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -186,8 +196,10 @@ func (t *TaskDao) UpdateCriteria(ctx context.Context, sid int64, criteria entity
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, criteria, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, criteria, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 
 	return t.c.closeConnection()
@@ -201,8 +213,10 @@ func (t *TaskDao) UpdateAlts(ctx context.Context, sid int64, alts entity.Alts) e
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, alts, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, alts, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -250,8 +264,10 @@ func (t *TaskDao) SetLastChange(ctx context.Context, sid int64) error {
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
@@ -264,8 +280,10 @@ func (t *TaskDao) SetExpertsWeights(ctx context.Context, sid int64, weights enti
 		return errors.New("cant connect to db")
 	}
 
-	if _, err := conn.ExecContext(ctx, query, weights, time.Now(), sid); err != nil {
+	if result, err := conn.ExecContext(ctx, query, weights, time.Now(), sid); err != nil {
 		return errors.Join(err, t.c.closeConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.closeConnection())
 	}
 	return t.c.closeConnection()
 }
