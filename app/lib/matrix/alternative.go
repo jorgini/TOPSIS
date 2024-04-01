@@ -13,10 +13,10 @@ type Alternative struct {
 	CountOfCriteria int           `json:"cnt_of_crit"`
 }
 
-func NewAlternative(size int) Alternative {
+func newAlternative(size int) Alternative {
 	alt := Alternative{Grade: make([]eval.Rating, size), CountOfCriteria: size}
 	for i := range alt.Grade {
-		alt.Grade[i] = eval.Rating{Evaluated: eval.Number(0)}
+		alt.Grade[i] = eval.Rating{Evaluated: nil}
 	}
 	return alt
 }
@@ -205,12 +205,3 @@ func (a *Alternative) Sum() eval.Rating {
 	}
 	return eval.Rating{Evaluated: sum}
 }
-
-//func CopyAlternative(a Alternative) Alternative {
-//	alternative := Alternative{Grade: make([]eval.Rating, len(a.Grade)), CountOfCriteria: a.CountOfCriteria}
-//
-//	for i := range alternative.Grade {
-//		alternative.Grade[i] = eval.Rating{Evaluated: a.Grade[i].CopyEval()}
-//	}
-//	return alternative
-//}

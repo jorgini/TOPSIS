@@ -12,6 +12,7 @@ import (
 )
 
 type TaskInput struct {
+	SID          int64                `json:"sid"`
 	Title        string               `json:"title"`
 	Description  string               `json:"description"`
 	TaskType     string               `json:"task_type"`
@@ -22,6 +23,7 @@ type TaskInput struct {
 
 func (t *TaskInput) UnmarshalJSON(data []byte) error {
 	result := struct {
+		SID          int64                 `json:"sid"`
 		Title        *string               `json:"title"`
 		Description  string                `json:"description"`
 		TaskType     *string               `json:"task_type"`
@@ -38,6 +40,7 @@ func (t *TaskInput) UnmarshalJSON(data []byte) error {
 		(*result.TaskType != v.Individuals && *result.TaskType != v.Group) {
 		return errors.New("invalid input arguments for task, check required fields")
 	} else {
+		t.SID = result.SID
 		t.Title = *result.Title
 		t.Description = result.Description
 		t.Method = *result.Method
@@ -52,6 +55,10 @@ func (t *TaskInput) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type TitleInput struct {
+	Title string `json:"title"`
+}
+
 // CreateTask godoc
 // @summary CreateTask
 // @description creates new task with required options
@@ -60,7 +67,7 @@ func (t *TaskInput) UnmarshalJSON(data []byte) error {
 // @tags task
 // @accept json
 // @produce json
-// @param input body TaskInput true "task options"
+// @param input body TitleInput true "task title"
 // @success 200 {object} response
 // @success 400 {object} response
 // @failure 500 {object} response
@@ -71,29 +78,19 @@ func (h *Handler) CreateTask(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	var input TaskInput
-	if err := c.BodyParser(&input); err != nil {
-		return sendErrorResponse(c, fiber.StatusBadRequest, err)
-	}
-	task := entity.TaskModel{
-		Title:        input.Title,
-		Description:  input.Description,
-		MaintainerID: uid,
-		TaskType:     input.TaskType,
-		Method:       input.Method,
-		CalcSettings: input.CalcSettings,
-		LingScale:    input.LingScale,
-		Status:       entity.Draft,
+	var input TitleInput
+	if err := c.BodyParser(&input); err != nil || input.Title == "" {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("invalid empty title"))
 	}
 
 	svc := h.di.GetInstanceService()
-	sid, err := svc.Task.CreateNewTask(c.UserContext(), &task)
+	sid, err := svc.Task.CreateNewTask(c.UserContext(), input.Title, uid)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	logrus.Infof("user with id %d successfully create new input with sid %d", uid, sid)
-	return c.JSON(response{Message: "success"})
+	logrus.Infof("user with id %d successfully create new task with sid %d", uid, sid)
+	return c.JSON(fiber.Map{"message": "success", "sid": sid})
 }
 
 // UpdateTask godoc
@@ -159,12 +156,11 @@ func (h *Handler) UpdateTask(c *fiber.Ctx) error {
 // @produce json
 // @param sid query int true "task identifier"
 // @success 200 {object} TaskInput
-// @success 403 {object} response
 // @success 404 {object} response
 // @failure 500 {object} response
 // @router /solution/settings [get]
 func (h *Handler) GetTask(c *fiber.Ctx) error {
-	uid, err := h.userIdentity(c)
+	_, err := h.userIdentity(c)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
@@ -175,15 +171,13 @@ func (h *Handler) GetTask(c *fiber.Ctx) error {
 	}
 
 	svc := h.di.GetInstanceService()
-	if err := svc.Task.CheckAccess(c.UserContext(), uid, sid); err != nil {
-		return sendErrorResponse(c, fiber.StatusForbidden, errors.New("hasn't access to solution"))
-	}
 
 	task, err := svc.Task.GetTask(c.UserContext(), sid)
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 	output := TaskInput{
+		SID:          task.SID,
 		Title:        task.Title,
 		Description:  task.Description,
 		TaskType:     task.TaskType,
@@ -231,6 +225,29 @@ func (h *Handler) DeleteTask(c *fiber.Ctx) error {
 
 	logrus.Infof("user with id %d successfully delete task with sid %d", uid, sid)
 	return c.JSON(response{Message: "success"})
+}
+
+func (h *Handler) GetRole(c *fiber.Ctx) error {
+	uid, err := h.userIdentity(c)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	sid, err := strconv.ParseInt(c.Query("sid"), 10, 64)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusNotFound, errors.New("task doesn't specified"))
+	}
+
+	svc := h.di.GetInstanceService()
+	if err := svc.Task.CheckAccess(c.UserContext(), uid, sid); err != nil {
+		return sendErrorResponse(c, fiber.StatusForbidden, errors.New("hasn't access to solution"))
+	}
+
+	if err := svc.ValidateUser(c.UserContext(), uid, sid); err != nil {
+		return c.JSON(response{Message: "expert"})
+	} else {
+		return c.JSON(response{Message: "maintainer"})
+	}
 }
 
 type PasswordInput struct {
@@ -316,7 +333,7 @@ func (c *ConnectInput) UnmarshalJSON(data []byte) error {
 // @success 400 {object} response
 // @success 403 {object} response
 // @failure 500 {object} response
-// @router /solution/connect [get]
+// @router /solution/connect [post]
 func (h *Handler) ConnectToTask(c *fiber.Ctx) error {
 	_, err := h.userIdentity(c)
 	if err != nil {

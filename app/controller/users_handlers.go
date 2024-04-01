@@ -205,7 +205,7 @@ func (h *Handler) RefreshToken(c *fiber.Ctx) error {
 		HTTPOnly: true,
 	})
 
-	return c.JSON(fiber.Map{"access": tokens.Access})
+	return c.JSON(fiber.Map{"token": tokens.Access})
 }
 
 // GetAllSolutions godoc

@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+.header h3 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 3vmin;
+}
+
+.params {
+    display: block;
+    margin: 3vmin auto;
+}
+
+.row-cols-2 {
+    display: flex;
+}
+
+.row-cols-2 > .col-4 {
+    display: flex;
+    justify-content: right;
+}
+
+.col-4 > p {
+    margin-top: 4vmin;
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 300;
+    font-size: 2vmin;
+}
+
+.col-8 > p {
+    margin-top: 4vmin;
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 300;
+    font-size: 2vmin;
+}
+
+.col-4 > img {
+    margin-top: 4vmin;
+    margin-right: 1vmin;
+}
+
+.row-cols-2 > .col-8 {
+    display: flex;
+    align-items: center;
+}
+
+.col-8 > * {
+    margin-left: 2%;
+}
+
+.select {
+    display: flex;
+    padding: 0;
+    border: 2px solid black;
+    border-radius: 0.5em;
+    width: fit-content;
+    height: 70%;
+    margin-top: 1vmin;
+    overflow: hidden;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.select > button {
+    border: 0;
+    outline: none;
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 2.5vmin;
+}
+
+.is_active {
+    background-color: #ABF8F4;
+}
+
+.is_active:hover {
+    filter: contrast(80%);
+}
+
+.non_active {
+    background-color: #CDFBF8;
+}
+
+.non_active:hover {
+    filter: contrast(80%);
+}
+
+.flag {
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: auto;
+    height: 2.5vmin;
+}
+
+.flag:hover {
+    cursor: pointer;
+}
+
+.close {
+    rotate: -90deg;
+}
+
+.open {
+    rotate: 0deg;
+}
+
+.left-arrow {
+    margin: 1.5vmin 1vmin auto 1.5vmin;
+    align-items: start;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: 90deg;
+}
+
+.right-arrow {
+    margin: 1.5vmin 1.5vmin auto 1vmin;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: -90deg;
+}
+
+.footer {
+    justify-content: space-between;
+}
+
+.footer p {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.5vmin;
+    font-weight: 700;
+    margin-top: 1vmin;
+}

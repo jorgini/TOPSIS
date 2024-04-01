@@ -22,8 +22,9 @@ func NewTaskService(task repository.Task, matrix repository.Matrix, factory repo
 	}
 }
 
-func (t *TaskService) CreateNewTask(ctx context.Context, input *entity.TaskModel) (int64, error) {
-	return t.repo.CreateNewTask(ctx, input)
+func (t *TaskService) CreateNewTask(ctx context.Context, title string, uid int64) (int64, error) {
+	task := entity.GetDefaultTask(title, uid)
+	return t.repo.CreateNewTask(ctx, &task)
 }
 
 func (t *TaskService) ValidateUser(ctx context.Context, uid, sid int64) error {
@@ -44,6 +45,7 @@ func (t *TaskService) GetTask(ctx context.Context, sid int64) (*entity.TaskModel
 	}
 
 	return &entity.TaskModel{
+		SID:          task.SID,
 		Title:        task.Title,
 		Description:  task.Description,
 		TaskType:     task.TaskType,
@@ -167,6 +169,7 @@ func (t *TaskService) GetAllSolutions(ctx context.Context, uid int64) ([]entity.
 	shortcards := make([]entity.TaskShortCard, len(tasks))
 	for i := range shortcards {
 		shortcards[i] = entity.TaskShortCard{
+			SID:         tasks[i].SID,
 			Title:       tasks[i].Title,
 			Description: tasks[i].Description,
 			Method:      tasks[i].Method,

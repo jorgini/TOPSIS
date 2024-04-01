@@ -1,7 +1,6 @@
 package topsis
 
 import (
-	"fmt"
 	"webApp/lib/eval"
 	"webApp/lib/matrix"
 	v "webApp/lib/variables"
@@ -17,6 +16,24 @@ type TopsisMatrix struct {
 	DistancesFind       bool                `json:"is_dist_find"`
 	RelativeCloseness   []eval.Rating       `json:"relate_close"`
 	ClosenessFind       bool                `json:"is_close_find"`
+}
+
+func NewTopsisMatrix(x, y int) *TopsisMatrix {
+	return &TopsisMatrix{
+		Matrix:              matrix.NewMatrix(x, y),
+		DistancesToNegative: make([]eval.Rating, x),
+		DistancesToPositive: make([]eval.Rating, x),
+		RelativeCloseness:   make([]eval.Rating, x),
+	}
+}
+
+func ConvertToTopsisMatrix(m *matrix.Matrix) *TopsisMatrix {
+	return &TopsisMatrix{
+		Matrix:              matrix.CopyMatrix(m),
+		DistancesToNegative: make([]eval.Rating, m.CountAlternatives),
+		DistancesToPositive: make([]eval.Rating, m.CountAlternatives),
+		RelativeCloseness:   make([]eval.Rating, m.CountAlternatives),
+	}
 }
 
 func (tm *TopsisMatrix) GetCoefs() []eval.Rating {
@@ -60,59 +77,6 @@ func (tm *TopsisMatrix) String() string {
 		s += "\n"
 	}
 	return s
-}
-
-func (tm *TopsisMatrix) Result() string {
-	s := "Result:\n"
-	set := make([]eval.Rating, tm.CountAlternatives)
-	for i := 0; i < tm.CountAlternatives; i++ {
-		set[i] = tm.RelativeCloseness[i]
-	}
-
-	for i := 0; i < tm.CountAlternatives; i++ {
-		s += fmt.Sprint(i+1) + ": "
-		indMax := 0
-		if set[i].GetType() == eval.NumbersMin.GetType() {
-			max := eval.NumbersMin
-
-			for j := range set {
-				if set[j].ConvertToNumber() > max {
-					max = set[j].ConvertToNumber()
-					indMax = j
-				}
-			}
-		} else {
-			max := eval.Interval{Start: eval.NumbersMin, End: eval.NumbersMin}
-
-			for j := range set {
-				if set[j].ConvertToInterval().SenguptaGeq(max) {
-					max = set[j].ConvertToInterval()
-					indMax = j
-				}
-			}
-		}
-		s += tm.Data[indMax].String() + "\t" + tm.RelativeCloseness[indMax].String() + "\n"
-		set[indMax] = eval.Rating{Evaluated: eval.NumbersMin}
-	}
-	return s
-}
-
-func NewTopsisMatrix(x, y int) *TopsisMatrix {
-	return &TopsisMatrix{
-		Matrix:              matrix.NewMatrix(x, y),
-		DistancesToNegative: make([]eval.Rating, x),
-		DistancesToPositive: make([]eval.Rating, x),
-		RelativeCloseness:   make([]eval.Rating, x),
-	}
-}
-
-func ConvertToTopsisMatrix(m *matrix.Matrix) *TopsisMatrix {
-	return &TopsisMatrix{
-		Matrix:              matrix.CopyMatrix(m),
-		DistancesToNegative: make([]eval.Rating, m.CountAlternatives),
-		DistancesToPositive: make([]eval.Rating, m.CountAlternatives),
-		RelativeCloseness:   make([]eval.Rating, m.CountAlternatives),
-	}
 }
 
 func AggregateDistances(matrices []TopsisMatrix, weights []eval.Evaluated) (*TopsisMatrix, error) {

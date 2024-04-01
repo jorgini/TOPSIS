@@ -1,6 +1,7 @@
 package topsis
 
 import (
+	"sort"
 	"sync"
 	"webApp/lib/eval"
 	"webApp/lib/matrix"
@@ -16,7 +17,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = PositiveIdealRateInterval(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdealRateInterval(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -25,7 +26,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = NegativeIdealRateInterval(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdealRateInterval(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -35,7 +36,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = PositiveIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
+			tm.PositiveIdeal, inerr = positiveIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
 			if inerr != nil {
 				err = inerr
 			}
@@ -44,7 +45,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = NegativeIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
+			tm.NegativeIdeal, inerr = negativeIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
 			if inerr != nil {
 				err = inerr
 			}
@@ -53,7 +54,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = PositiveIdealRateAIFS(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdealRateAIFS(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -62,7 +63,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = NegativeIdealRateAIFS(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdealRateAIFS(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -71,7 +72,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = PositiveIdealRateNumber(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdealRateNumber(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -80,7 +81,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = NegativeIdealRateNumber(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdealRateNumber(tm.Data, tm.Criteria)
 			if inerr != nil {
 				err = inerr
 			}
@@ -97,7 +98,6 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 func (tm *TopsisMatrix) FindDistanceToIdeals(vt, vi, vn v.Variants) error {
 	var wg sync.WaitGroup
 	var err error
-
 	wg.Add(tm.CountAlternatives)
 	for i := 0; i < tm.CountAlternatives; i++ {
 		go func(i int) {
@@ -171,4 +171,34 @@ func (tm *TopsisMatrix) CalcCloseness() {
 	}
 	wg.Wait()
 	tm.ClosenessFind = true
+}
+
+func (tm *TopsisMatrix) RankedList(ranking v.Variants) matrix.RankedList {
+	set := make([]eval.Rating, len(tm.RelativeCloseness))
+	ind := make([]int, len(tm.RelativeCloseness))
+	for i := range set {
+		ind[i] = i
+		set[i] = tm.RelativeCloseness[i].CopyEval()
+	}
+
+	if ranking == v.Sengupta {
+		sort.Slice(ind, func(i, j int) bool {
+			l := set[ind[i]].ConvertToInterval()
+			r := set[ind[j]].ConvertToInterval()
+			return l.SenguptaGeq(r)
+		})
+		sort.Slice(set, func(i, j int) bool {
+			l := set[i].ConvertToInterval()
+			r := set[j].ConvertToInterval()
+			return l.SenguptaGeq(r)
+		})
+	} else {
+		sort.Slice(ind, func(i, j int) bool {
+			return set[ind[i]].ConvertToNumber() > set[ind[j]].ConvertToNumber()
+		})
+		sort.Slice(set, func(i, j int) bool {
+			return set[i].ConvertToNumber() > set[j].ConvertToNumber()
+		})
+	}
+	return matrix.RankedList{Coeffs: set, Order: ind}
 }

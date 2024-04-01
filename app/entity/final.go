@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"time"
 	"webApp/lib"
@@ -13,37 +11,10 @@ import (
 
 type FinalModel struct {
 	FID          int64                 `json:"fid" db:"fid"`
-	Result       Coefficients          `json:"result" db:"result"`
+	Result       matrix.RankedList     `json:"result" db:"result"`
 	SensAnalysis lib.SensitivityResult `json:"sens_analysis" db:"sens_analysis"`
 	Threshold    float64               `json:"threshold" db:"threshold"`
 	LastChange   time.Time             `json:"last_change" db:"last_change"`
-}
-
-type Coefficients []eval.Rating
-
-func (c Coefficients) Value() (driver.Value, error) {
-	data, err := json.Marshal(c)
-	return string(data), err
-}
-
-func (c *Coefficients) Scan(src interface{}) error {
-	var tmp Coefficients
-	var err error
-	switch src.(type) {
-	case string:
-		err = json.Unmarshal([]byte(src.(string)), &tmp)
-	case []byte:
-		err = json.Unmarshal(src.([]byte), &tmp)
-	case nil:
-		return nil
-	default:
-		return errors.New("incompatible type for Weights")
-	}
-	if err != nil {
-		return err
-	}
-	*c = tmp
-	return nil
 }
 
 func CalcFinal(matrices []MatrixModel, task *TaskModel, threshold float64) (*FinalModel, error) {
@@ -56,7 +27,7 @@ func CalcFinal(matrices []MatrixModel, task *TaskModel, threshold float64) (*Fin
 	weights := ConvertRatingsToEvaluated(task.ExpertsWeights)
 
 	var err error
-	var coeffs Coefficients
+	var coeffs matrix.RankedList
 	if task.Method == v.TOPSIS {
 		coeffs, err = lib.TopsisFullCalc(settings, mxs, weights)
 		if err != nil {

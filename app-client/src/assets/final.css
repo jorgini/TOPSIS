@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+.short-card {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 2px solid black;
+    border-radius: 0 0 1em 1em;
+}
+
+.short-card .col {
+    margin: 2vmin auto 2vmin auto;
+    display: flex;
+    justify-content: center;
+}
+
+#setting, #experts {
+    width: 60%;
+}
+
+#setting > .field {
+    height: 7vmin;
+    width: 15vmin;
+}
+
+#setting > .btns {
+    width: 50%;
+}
+
+#experts .exp {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.exp > p {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 2.5vmin;
+    margin: auto 2vmin auto 2vmin;
+}
+
+.exp > .weight {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.weight select {
+    background-color: black;
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.5vmin;
+    font-weight: 700;
+    color: #ABF8F4;
+    border-radius: 1em;
+    border: 0;
+    width: fit-content;
+    margin: auto 4vmin auto auto;
+}
+
+h1 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 5vmin;
+}
+
+.left-arrow {
+    margin: 1.5vmin 1vmin auto 1.5vmin;
+    align-items: start;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: 90deg;
+}
+
+.right-arrow {
+    margin: 1.5vmin 1.5vmin auto 1vmin;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: -90deg;
+}
+
+.footer {
+    justify-content: space-between;
+}
+
+.footer p {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.5vmin;
+    font-weight: 700;
+    margin-top: 1vmin;
+}

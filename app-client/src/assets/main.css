@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+.sign-up {
+    width: fit-content;
+    height: 50%;
+    font-size: 2.5vmin;
+    white-space: nowrap;
+    margin-right: 2rem;
+}
+
+h1 {
+    width: 85%;
+    margin-left: 2rem;
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.info {
+    margin-left: 2rem;
+    margin-top: 2rem;
+    padding: 0.5rem 0.5rem 0.1rem 0.5rem;
+    width: 75%;
+    border: 1px solid black;
+    border-radius: 1rem;
+    font-family: 'Inria Sans', sans-serif;
+    font-size: 2.5vmin;
+    font-weight: normal;
+}
+
+.start {
+    margin-left: 2rem;
+    margin-top: 2rem;
+}
+
+.subinfo {
+    width: 100%;
+    margin-top: 2rem;
+    border: 2px solid black;
+    border-radius: 2em 2em 0 0;
+    display: inline-flex;
+}
+
+.subinfo > div {
+    display: inline-block;
+    width: 50%;
+    padding: 2em;
+}
+
+.tech {
+    border-right: 1px solid black;
+}
+
+.input {
+    border-left: 1px solid black;
+}
+
+.subinfo h2 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: bold;
+    font-size: 4vmin;
+    text-align: center;
+}
+
+.download {
+    display: block;
+    margin: 0 auto;
+}

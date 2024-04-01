@@ -76,7 +76,6 @@ func (h *Handler) UpdateMatrix(c *fiber.Ctx) error {
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusNotFound, errors.New("alternative doesn't specified"))
 	}
-	ord--
 
 	request := RatingsInput{}
 	if err := c.BodyParser(&request); err != nil {
@@ -125,7 +124,6 @@ func (h *Handler) GetRatings(c *fiber.Ctx) error {
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusNotFound, errors.New("alternative doesn't specified"))
 	}
-	ord--
 
 	service := h.di.GetInstanceService()
 	ratings, err := service.Matrix.GetRatings(c.UserContext(), uid, sid, ord)

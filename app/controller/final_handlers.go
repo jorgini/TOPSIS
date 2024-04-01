@@ -39,7 +39,7 @@ func (h *Handler) GetFinal(c *fiber.Ctx) error {
 
 	request := ThresholdInput{}
 	if err := c.BodyParser(&request); err != nil {
-		request.Threshold = 0
+		request.Threshold = -1
 	}
 
 	svc := h.di.GetInstanceService()

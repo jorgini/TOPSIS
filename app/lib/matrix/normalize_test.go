@@ -12,7 +12,7 @@ func TestEmptyValues(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	m := NewMatrix(3, 3)
-	err := m.SetRatings([][]eval.Evaluated{
+	err := m.setRatings([][]eval.Evaluated{
 		{eval.Number(0), eval.Number(0).ConvertToAIFS(v.Triangle), eval.Number(0).ConvertToInterval()},
 		{eval.Number(0).ConvertToT1FS(v.Trapezoid), eval.Number(0).ConvertToInterval(), eval.Number(0)},
 		{eval.Number(0).ConvertToAIFS(v.Trapezoid), eval.Number(0), eval.Number(0).ConvertToInterval()},
@@ -44,7 +44,7 @@ func TestEmptyWeights(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	m := NewMatrix(3, 3)
-	err := m.SetRatings([][]eval.Evaluated{
+	err := m.setRatings([][]eval.Evaluated{
 		{eval.Number(4), eval.Number(0).ConvertToAIFS(v.Triangle), eval.Number(8.4).ConvertToInterval()},
 		{eval.Number(3).ConvertToT1FS(v.Trapezoid), eval.Number(6.1).ConvertToInterval(), eval.Number(7)},
 		{eval.Number(5.5).ConvertToAIFS(v.Trapezoid), eval.Number(4), eval.Number(0.4).ConvertToInterval()},

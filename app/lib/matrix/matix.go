@@ -20,6 +20,22 @@ type Matrix struct {
 	FormFs            v.Variants    `json:"form_fs"`
 }
 
+func NewMatrix(x, y int) *Matrix {
+	m := Matrix{
+		Data:              make([]Alternative, x),
+		CountAlternatives: x,
+		CountCriteria:     y,
+		Criteria:          NewCriteria(y),
+		HighType:          eval.NumbersMin.GetType(),
+		FormFs:            v.None,
+	}
+
+	for i := range m.Data {
+		m.Data[i] = newAlternative(y)
+	}
+	return &m
+}
+
 func (m *Matrix) Value() (driver.Value, error) {
 	data, err := json.Marshal(m)
 	return string(data), err
@@ -41,22 +57,6 @@ func (m *Matrix) Scan(src interface{}) error {
 	}
 	*m = matrix
 	return nil
-}
-
-func NewMatrix(x, y int) *Matrix {
-	m := Matrix{
-		Data:              make([]Alternative, x),
-		CountAlternatives: x,
-		CountCriteria:     y,
-		Criteria:          NewCriteria(y),
-		HighType:          eval.NumbersMin.GetType(),
-		FormFs:            v.None,
-	}
-
-	for i := range m.Data {
-		m.Data[i] = NewAlternative(y)
-	}
-	return &m
 }
 
 func (m *Matrix) UpdateAlternativeRatings(i int, ratings []eval.Rating) error {
@@ -83,7 +83,7 @@ func (m *Matrix) SetValue(value eval.Evaluated, i, j int) error {
 	return nil
 }
 
-func (m *Matrix) SetRatings(data [][]eval.Evaluated) error {
+func (m *Matrix) setRatings(data [][]eval.Evaluated) error {
 	if m.CountAlternatives == 0 {
 		return nil
 	}
@@ -134,7 +134,7 @@ func (m *Matrix) SetCriterion(Weight eval.Evaluated, typeOf bool, i int) error {
 	return nil
 }
 
-func (m *Matrix) CastToType(t string, f v.Variants) {
+func (m *Matrix) castToType(t string, f v.Variants) {
 	var wg sync.WaitGroup
 	wg.Add(len(m.Data))
 	for i := range m.Data {
@@ -194,7 +194,7 @@ func TypingMatrices(matrices ...Matrix) error {
 	for k := range matrices {
 		go func(k int) {
 			defer wg.Done()
-			matrices[k].CastToType(highestType, highestForm)
+			matrices[k].castToType(highestType, highestForm)
 		}(k)
 	}
 

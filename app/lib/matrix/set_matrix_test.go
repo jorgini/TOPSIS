@@ -12,7 +12,7 @@ func TestWrongSizeValue(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	m := NewMatrix(3, 3)
-	err := m.SetRatings([][]eval.Evaluated{
+	err := m.setRatings([][]eval.Evaluated{
 		{eval.Number(4), eval.NumbersMin, eval.Number(0), eval.Number(8.4)},
 		{eval.Number(3), eval.Number(6.1), eval.Number(7)},
 		{eval.Number(5.5), eval.Number(4), eval.Number(0.4)},
@@ -25,7 +25,7 @@ func TestWrongSizeWeights(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
 	m := NewMatrix(3, 3)
-	err := m.SetRatings([][]eval.Evaluated{
+	err := m.setRatings([][]eval.Evaluated{
 		{eval.Number(4), eval.Number(0), eval.Number(8.4)},
 		{eval.Number(3), eval.Number(6.1), eval.Number(7)},
 		{eval.Number(5.5), eval.Number(4), eval.Number(0.4)},

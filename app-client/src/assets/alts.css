@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+.short-card {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 2px solid black;
+    border-radius: 0 0 1em 1em;
+}
+
+.short-card .col {
+    justify-content: center;
+}
+
+.short-card p {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 2vmin;
+    width: fit-content;
+    margin: 0 auto 1vmin auto;
+}
+
+.short-card .annot {
+    font-weight: 300;
+    margin-top: 1vmin;
+    margin-bottom: 0;
+}
+
+h1 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 5vmin;
+}
+
+.add-alts {
+    margin: 6vmin auto;
+    display: flex;
+    justify-content: center;
+}
+
+#alts {
+    display: block;
+    height: auto;
+    width: 100%;
+    padding: 0;
+}
+
+#alts > .alt {
+    border-bottom: 1px solid black;
+    margin: 0 auto 0 auto;
+}
+
+.alt > .row-cols-3 {
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    margin: 1.5vh auto 1.5vh auto;
+}
+
+.row-cols-3 > .col-3 {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+}
+
+.row-cols-3 > .right-col {
+    justify-content: left;
+}
+
+.col-3 > p {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 300;
+    font-size: 2vmin;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.col-3 > .cancel {
+    border-radius: 100%;
+    height: 7vh;
+    width: auto;
+    padding: 0;
+    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.cancel:hover {
+    opacity: 0.7;
+    box-shadow: 0 6px 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.col-3 > .flag {
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: auto;
+    height: 2.5vmin;
+    margin-right: 1vmin;
+}
+
+.flag:hover {
+    cursor: pointer;
+}
+
+.close {
+    rotate: -90deg;
+}
+
+.open {
+    rotate: 0deg;
+}
+
+.col-6 {
+    display: flex;
+}
+
+.col-6 > .field {
+    width: 100%;
+    height: 6vh;
+    margin: auto;
+}
+
+.left-arrow {
+    margin: 1.5vmin 1vmin auto 1.5vmin;
+    align-items: start;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: 90deg;
+}
+
+.right-arrow {
+    margin: 1.5vmin 1.5vmin auto 1vmin;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: -90deg;
+}
+
+.footer {
+    justify-content: space-between;
+}
+
+.footer p {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.5vmin;
+    font-weight: 700;
+    margin-top: 1vmin;
+}

@@ -1,7 +1,6 @@
 package smart
 
 import (
-	"fmt"
 	"webApp/lib/eval"
 	"webApp/lib/matrix"
 	v "webApp/lib/variables"
@@ -36,41 +35,6 @@ func (sm *SmartMatrix) String() string {
 			s += sm.FinalScores[i].String() + " "
 		}
 		s += "\n"
-	}
-	return s
-}
-
-func (sm *SmartMatrix) Result() string {
-	s := "Result:\n"
-	set := make([]eval.Rating, sm.CountAlternatives)
-	for i := 0; i < sm.CountAlternatives; i++ {
-		set[i] = sm.FinalScores[i]
-	}
-
-	for i := 0; i < sm.CountAlternatives; i++ {
-		s += fmt.Sprint(i+1) + ": "
-		indMax := 0
-		if set[i].GetType() == eval.NumbersMin.GetType() {
-			max := eval.NumbersMin
-
-			for j := range set {
-				if set[j].ConvertToNumber() > max {
-					max = set[j].ConvertToNumber()
-					indMax = j
-				}
-			}
-		} else {
-			max := eval.Interval{Start: eval.NumbersMin, End: eval.NumbersMin}
-
-			for j := range set {
-				if set[j].ConvertToInterval().SenguptaGeq(max) {
-					max = set[j].ConvertToInterval()
-					indMax = j
-				}
-			}
-		}
-		s += sm.Data[indMax].String() + "\t" + sm.FinalScores[indMax].String() + "\n"
-		set[indMax] = eval.Rating{Evaluated: eval.NumbersMin}
 	}
 	return s
 }

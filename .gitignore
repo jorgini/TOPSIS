@@ -1,7 +1,5 @@
 .idea
 
-front
-
 .database
 
 app/cmd/.env

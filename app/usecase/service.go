@@ -24,7 +24,7 @@ type Session interface {
 }
 
 type Task interface {
-	CreateNewTask(ctx context.Context, task *entity.TaskModel) (int64, error)
+	CreateNewTask(ctx context.Context, title string, uid int64) (int64, error)
 	ValidateUser(ctx context.Context, uid, sid int64) error
 	CheckAccess(ctx context.Context, uid, sid int64) error
 	UpdateTask(ctx context.Context, sid int64, input *entity.TaskModel) error
