@@ -18,7 +18,7 @@ func (n Number) CopyEval() Rating {
 }
 
 func (n Number) String() string {
-	return fmt.Sprintf("%.2f", float64(n))
+	return fmt.Sprintf("%.3f", float64(n))
 }
 
 func (n Number) GetType() string {
@@ -88,4 +88,11 @@ func (n Number) DiffInterval(_ Interval, _ bool, _ v.Variants) (Interval, error)
 
 func (n Number) Sum(other Evaluated) Rating {
 	return Rating{n + other.ConvertToNumber()}
+}
+
+func (n Number) Equals(other Evaluated) bool {
+	if other.GetType() != n.GetType() {
+		return false
+	}
+	return math.Abs(float64(n-other.ConvertToNumber())) < 0.01
 }

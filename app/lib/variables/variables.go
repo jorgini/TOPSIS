@@ -9,7 +9,7 @@ type Variants int
 const (
 	TOPSIS      = "topsis"
 	SMART       = "smart"
-	Individuals = "individuals"
+	Individuals = "individual"
 	Group       = "group"
 )
 

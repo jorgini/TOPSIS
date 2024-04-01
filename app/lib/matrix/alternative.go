@@ -43,7 +43,7 @@ func (a *Alternative) NumberMetric(to *Alternative, variants v.Variants) (eval.N
 	result := eval.Number(0)
 	wg.Add(a.CountOfCriteria)
 	for i := 0; i < a.CountOfCriteria; i++ {
-		go func(i int) {
+		go func(i int, mut *sync.Mutex) {
 			defer wg.Done()
 			select {
 			case <-ctx.Done():
@@ -54,15 +54,14 @@ func (a *Alternative) NumberMetric(to *Alternative, variants v.Variants) (eval.N
 					cancel()
 					return
 				} else {
-					mu.Lock()
+					mut.Lock()
 					result += tmp
-					mu.Unlock()
+					mut.Unlock()
 				}
 			}
-		}(i)
+		}(i, &mu)
 	}
 	wg.Wait()
-
 	if err != nil {
 		return 0, err
 	}
@@ -90,7 +89,7 @@ func (a *Alternative) IntervalMetric(to *Alternative, Criteria []Criterion, vari
 	result := eval.Interval{}
 	wg.Add(len(Criteria))
 	for i, c := range Criteria {
-		go func(i int, c Criterion) {
+		go func(i int, c Criterion, mut *sync.Mutex) {
 			defer wg.Done()
 			select {
 			case <-ctx.Done():
@@ -101,12 +100,12 @@ func (a *Alternative) IntervalMetric(to *Alternative, Criteria []Criterion, vari
 					cancel()
 					return
 				} else {
-					mu.Lock()
+					mut.Lock()
 					result = result.Sum(tmp).ConvertToInterval()
-					mu.Unlock()
+					mut.Unlock()
 				}
 			}
-		}(i, c)
+		}(i, c, &mu)
 	}
 
 	wg.Wait()
@@ -140,7 +139,7 @@ func (a *Alternative) FSMetric(to *Alternative, variants v.Variants) (eval.Numbe
 	result := eval.Number(0)
 	wg.Add(a.CountOfCriteria)
 	for i := 0; i < a.CountOfCriteria; i++ {
-		go func(i int) {
+		go func(i int, mut *sync.Mutex) {
 			defer wg.Done()
 			select {
 			case <-ctx.Done():
@@ -151,12 +150,12 @@ func (a *Alternative) FSMetric(to *Alternative, variants v.Variants) (eval.Numbe
 					cancel()
 					return
 				} else {
-					mu.Lock()
+					mut.Lock()
 					result += tmp
-					mu.Unlock()
+					mut.Unlock()
 				}
 			}
-		}(i)
+		}(i, &mu)
 	}
 
 	wg.Wait()

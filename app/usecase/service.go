@@ -8,7 +8,7 @@ import (
 	"webApp/repository"
 )
 
-//go:generate mockgen -source=service.go -destination=mocks/mock.go
+//go:generate mockgen -source=service.go -destination=mocks-service/mock.go
 
 type User interface {
 	CreateNewUser(ctx context.Context, user *entity.UserModel) (int64, error)

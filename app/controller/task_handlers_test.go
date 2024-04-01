@@ -14,10 +14,10 @@ import (
 	"webApp/lib/eval"
 	v "webApp/lib/variables"
 	"webApp/usecase"
-	mock_service "webApp/usecase/mocks"
+	mock_service "webApp/usecase/mocks-service"
 )
 
-func TestHandler_CreateSolution(t *testing.T) {
+func TestHandler_CreateTask(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service)
 	tests := []struct {
@@ -34,12 +34,12 @@ func TestHandler_CreateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "description": "description", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "description": "description", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				Description:  "description",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -57,11 +57,11 @@ func TestHandler_CreateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -79,7 +79,7 @@ func TestHandler_CreateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsisss", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsisss", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 			},
@@ -101,11 +101,11 @@ func TestHandler_CreateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -161,7 +161,7 @@ func TestHandler_CreateSolution(t *testing.T) {
 	}
 }
 
-func TestHandler_UpdateSolution(t *testing.T) {
+func TestHandler_UpdateTask(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service)
 	tests := []struct {
@@ -180,12 +180,12 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "description": "description", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "description": "description", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				Description:  "description",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -205,11 +205,11 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -229,7 +229,7 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsisss", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsisss", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 			},
@@ -242,7 +242,7 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsisss", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsisss", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 			},
@@ -266,7 +266,7 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
@@ -281,11 +281,11 @@ func TestHandler_UpdateSolution(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individuals", "method": "topsis", "calc_settings": 42}`,
+			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
 			inputTask: entity.TaskModel{
 				Title:        "title",
 				MaintainerID: 1,
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -342,7 +342,7 @@ func TestHandler_UpdateSolution(t *testing.T) {
 	}
 }
 
-func TestHandler_GetSolution(t *testing.T) {
+func TestHandler_GetTask(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service)
 
@@ -364,7 +364,7 @@ func TestHandler_GetSolution(t *testing.T) {
 			outputTask: entity.TaskModel{
 				Title:        "title",
 				Description:  "description",
-				TaskType:     "individuals",
+				TaskType:     "individual",
 				Method:       "topsis",
 				CalcSettings: 42,
 				LingScale:    *eval.DefaultT1FSScale,
@@ -486,7 +486,7 @@ func TestHandler_GetSolution(t *testing.T) {
 	}
 }
 
-func TestHandler_DeleteSolution(t *testing.T) {
+func TestHandler_DeleteTask(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, di *mock_service.MockDiService, svc *usecase.Service)
 	tests := []struct {
@@ -739,7 +739,7 @@ func TestHandler_SetPassword(t *testing.T) {
 	}
 }
 
-func TestHandler_ConnectToSolution(t *testing.T) {
+func TestHandler_ConnectToTask(t *testing.T) {
 	// Init Test Table
 	type mockBehavior func(r *mock_service.MockTask, di *mock_service.MockDiService, input ConnectInput, svc *usecase.Service)
 	tests := []struct {
@@ -1062,7 +1062,7 @@ func TestHandler_GetExperts(t *testing.T) {
 				r.EXPECT().GetTask(context.Background(), int64(1)).Return(task, nil)
 			},
 			expectedStatusCode:   400,
-			expectedResponseBody: `{"message":"individuals task doesnt provide this function"}`,
+			expectedResponseBody: `{"message":"individual task doesnt provide this function"}`,
 		},
 		{
 			name:       "Wrong URL",

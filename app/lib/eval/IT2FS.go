@@ -72,13 +72,14 @@ func (t *IT2FS) ConvertToNumber() Number {
 
 func (t *IT2FS) ConvertToInterval() Interval {
 	if t.Decompose.Start == NumbersMin && t.Decompose.End == NumbersMin {
-		t.Decompose = Interval{0, 0}
+		tmp := Interval{0, 0}
 		for alpha := Number(0.0); alpha <= 1; alpha += Number(1.0 / float64(CountOfAlfaSlices)) {
 			s, f := t.MemberFunction(alpha)
 			s = s.Weighted(Rating{alpha * 0.5}).ConvertToInterval()
 			f = f.Weighted(Rating{alpha * 0.5}).ConvertToInterval()
-			t.Decompose = t.Decompose.Sum(s.Sum(f).Weighted(alpha)).ConvertToInterval()
+			tmp = tmp.Sum(s.Sum(f).Weighted(alpha)).ConvertToInterval()
 		}
+		t.Decompose = tmp
 	}
 	return t.Decompose
 }
@@ -183,4 +184,22 @@ func (t *IT2FS) Sum(other Evaluated) Rating {
 	}
 
 	return Rating{ret}
+}
+
+func (t *IT2FS) Equals(other Evaluated) bool {
+	if other.GetType() != t.GetType() || other.GetForm() != t.GetForm() {
+		return false
+	}
+
+	for i := range t.Bottom {
+		if t.Bottom[i].Equals(other.ConvertToIT2FS(v.Default).Bottom[i]) == false {
+			return false
+		}
+	}
+	for i := range t.Upward {
+		if t.Upward[i].Equals(other.ConvertToIT2FS(v.Default).Upward[i]) == false {
+			return false
+		}
+	}
+	return true
 }

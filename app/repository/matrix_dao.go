@@ -25,7 +25,7 @@ func NewMatrixDao(factory IConnectionFactory, config *configs.DbConfig) *MatrixD
 func (m *MatrixDao) getSizesOfMatrix(ctx context.Context, sid int64) (int, int, error) {
 	query := fmt.Sprintf("SELECT alternatives, criteria FROM %s WHERE sid=$1", m.cfg.TaskTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return 0, 0, errors.New("cant connect to db")
 	}
@@ -34,38 +34,38 @@ func (m *MatrixDao) getSizesOfMatrix(ctx context.Context, sid int64) (int, int, 
 	var criteria entity.Criteria
 	row := conn.QueryRowxContext(ctx, query, sid)
 	if err := row.Scan(&alts, &criteria); err != nil {
-		return 0, 0, errors.Join(err, m.c.closeConnection())
+		return 0, 0, errors.Join(err, m.c.CloseConnection())
 	}
-	return len(alts), len(criteria), m.c.closeConnection()
+	return len(alts), len(criteria), m.c.CloseConnection()
 }
 
 func (m *MatrixDao) DeleteDependencies(ctx context.Context, sid, mainUid int64) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE sid=$1 AND uid!=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if _, err := conn.ExecContext(ctx, query, sid, mainUid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) NullifyMatrices(ctx context.Context, sid int64, alts, criteria int) error {
 	query := fmt.Sprintf("UPDATE %s SET matrix=$1 WHERE sid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	nullMatrix := matrix.NewMatrix(alts, criteria)
 	if _, err := conn.ExecContext(ctx, query, nullMatrix, sid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) CreateMatrix(ctx context.Context, uid, sid int64) (int64, error) {
@@ -78,7 +78,7 @@ func (m *MatrixDao) CreateMatrix(ctx context.Context, uid, sid int64) (int64, er
 	}
 	newMatrix := matrix.NewMatrix(x, y)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return 0, errors.New("cant connect to db")
 	}
@@ -86,15 +86,15 @@ func (m *MatrixDao) CreateMatrix(ctx context.Context, uid, sid int64) (int64, er
 	var mid int64
 	row := conn.QueryRowxContext(ctx, query, sid, uid, newMatrix, entity.Draft)
 	if err := row.Scan(&mid); err != nil {
-		return 0, errors.Join(err, m.c.closeConnection())
+		return 0, errors.Join(err, m.c.CloseConnection())
 	}
-	return mid, m.c.closeConnection()
+	return mid, m.c.CloseConnection()
 }
 
 func (m *MatrixDao) CheckAccess(ctx context.Context, uid, sid int64) error {
 	query := fmt.Sprintf("SELECT 1 FROM %s WHERE uid=$1 AND sid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
@@ -102,31 +102,31 @@ func (m *MatrixDao) CheckAccess(ctx context.Context, uid, sid int64) error {
 	var result int
 	row := conn.QueryRowxContext(ctx, query, uid, sid)
 	if err := row.Scan(&result); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) DeleteMatrix(ctx context.Context, uid, sid int64) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE uid=$1 AND sid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if result, err := conn.ExecContext(ctx, query, uid, sid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
-		return errors.Join(errors.New("nothing to delete"), m.c.closeConnection())
+		return errors.Join(errors.New("nothing to delete"), m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) GetMID(ctx context.Context, uid, sid int64) (int64, error) {
 	query := fmt.Sprintf("SELECT mid FROM %s WHERE uid=$1 AND sid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return 0, errors.New("cant connect to db")
 	}
@@ -134,22 +134,22 @@ func (m *MatrixDao) GetMID(ctx context.Context, uid, sid int64) (int64, error) {
 	var mid int64
 	row := conn.QueryRowxContext(ctx, query, uid, sid)
 	if err := row.Scan(&mid); err != nil {
-		return 0, errors.Join(err, m.c.closeConnection())
+		return 0, errors.Join(err, m.c.CloseConnection())
 	}
-	return mid, m.c.closeConnection()
+	return mid, m.c.CloseConnection()
 }
 
 func (m *MatrixDao) GetMatrix(ctx context.Context, mid int64) (*matrix.Matrix, error) {
 	query := fmt.Sprintf("SELECT matrix FROM %s WHERE mid=$1", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return nil, errors.New("cant connect to db")
 	}
 
 	var resultMatrix matrix.Matrix
 	if err := conn.GetContext(ctx, &resultMatrix, query, mid); err != nil {
-		return nil, errors.Join(err, m.c.closeConnection())
+		return nil, errors.Join(err, m.c.CloseConnection())
 	}
 	return &resultMatrix, nil
 }
@@ -167,36 +167,36 @@ func (m *MatrixDao) UpdateMatrix(ctx context.Context, mid, ord int64, rating []e
 
 	query := fmt.Sprintf("UPDATE %s SET matrix=$1 WHERE mid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if _, err := conn.ExecContext(ctx, query, prevMatrix, mid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) GetExpertsRelateToTask(ctx context.Context, sid int64) ([]entity.ExpertStatus, error) {
 	query := fmt.Sprintf("SELECT uid, status FROM %s WHERE sid=$1", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return nil, errors.New("cant connect to db")
 	}
 
 	var experts []entity.ExpertStatus
 	if err := conn.SelectContext(ctx, &experts, query, sid); err != nil {
-		return nil, errors.Join(err, m.c.closeConnection())
+		return nil, errors.Join(err, m.c.CloseConnection())
 	}
-	return experts, m.c.closeConnection()
+	return experts, m.c.CloseConnection()
 }
 
 func (m *MatrixDao) GetMatricesRelateToTask(ctx context.Context, sid int64) ([]entity.MatrixModel, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE sid=$1", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return nil, errors.New("cant connect to db")
 	}
@@ -211,29 +211,29 @@ func (m *MatrixDao) GetMatricesRelateToTask(ctx context.Context, sid int64) ([]e
 func (m *MatrixDao) SetStatusComplete(ctx context.Context, mid int64) error {
 	query := fmt.Sprintf("UPDATE %s SET status=$1 WHERE mid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if result, err := conn.ExecContext(ctx, query, entity.Complete, mid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
-		return errors.Join(errors.New("nothing to update"), m.c.closeConnection())
+		return errors.Join(errors.New("nothing to update"), m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }
 
 func (m *MatrixDao) DeactivateStatuses(ctx context.Context, sid int64) error {
 	query := fmt.Sprintf("UPDATE %s SET status=$1 WHERE sid=$2", m.cfg.MatrixTable)
 
-	conn := m.c.getConnection()
+	conn := m.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if _, err := conn.ExecContext(ctx, query, entity.Draft, sid); err != nil {
-		return errors.Join(err, m.c.closeConnection())
+		return errors.Join(err, m.c.CloseConnection())
 	}
-	return m.c.closeConnection()
+	return m.c.CloseConnection()
 }

@@ -21,6 +21,7 @@ type Evaluated interface {
 	DiffInterval(other Interval, typeOfCriterion bool, variants v.Variants) (Interval, error)
 	Sum(other Evaluated) Rating
 	CopyEval() Rating
+	Equals(other Evaluated) bool
 }
 
 type Rating struct {

@@ -191,7 +191,7 @@ func (t *TaskService) SetExpertsWeights(ctx context.Context, sid int64, weights 
 	if len(weights) == 0 && len(experts) != 0 {
 		weights = make([]eval.Rating, len(experts))
 		for i := range weights {
-			weights[i] = eval.Rating{Evaluated: eval.Number(1.0 / len(experts))}
+			weights[i] = eval.Rating{Evaluated: eval.Number(1.0 / float64(len(experts)))}
 		}
 	} else if len(weights) != len(experts) || len(experts) == 0 {
 		return errors.New("invalid size of weights for experts")

@@ -71,3 +71,97 @@ func TestEmptyWeights(t *testing.T) {
 
 	assert.Equal(t, v.EmptyValues, err)
 }
+
+//func TestMatrix_Normalization(t *testing.T) {
+//	testCases := []struct {
+//		name          string
+//		input         Matrix
+//		optNormValue  v.Variants
+//		optNormWeight v.Variants
+//		expected      Matrix
+//	}{
+//		{
+//			name: "Numbers",
+//			input: Matrix{
+//				Data: []Alternative{
+//					{
+//						Grade:           []eval.Rating{{eval.Number(5.5)}, {eval.Number(7)}, {eval.Number(3.7)}},
+//						CountOfCriteria: 3,
+//					},
+//					{
+//						Grade:           []eval.Rating{{eval.Number(4.8)}, {eval.Number(8.2)}, {eval.Number(6.6)}},
+//						CountOfCriteria: 3,
+//					},
+//					{
+//						Grade:           []eval.Rating{{eval.Number(9.1)}, {eval.Number(3)}, {eval.Number(2.8)}},
+//						CountOfCriteria: 3,
+//					},
+//				},
+//				Criteria: []Criterion{
+//					{
+//						Weight:         eval.Rating{eval.Number(5)},
+//						TypeOfCriteria: v.Benefit,
+//					},
+//					{
+//						Weight:         eval.Rating{eval.Number(1)},
+//						TypeOfCriteria: v.Cost,
+//					},
+//					{
+//						Weight:         eval.Rating{eval.Number(7)},
+//						TypeOfCriteria: v.Cost,
+//					},
+//				},
+//				CountAlternatives: 3,
+//				CountCriteria:     3,
+//				HighType:          "eval.Number",
+//				FormFs:            v.None,
+//			},
+//			optNormValue:  v.NormalizeWithSum,
+//			optNormWeight: v.NormalizeWithSum,
+//			expected: Matrix{
+//				Data: []Alternative{
+//					{
+//						Grade:           []eval.Rating{{eval.Number(0.471)}, {eval.Number(0.625)}, {eval.Number(0.459)}},
+//						CountOfCriteria: 3,
+//					},
+//					{
+//						Grade:           []eval.Rating{{eval.Number(0.411)}, {eval.Number(0.733)}, {eval.Number(0.818)}},
+//						CountOfCriteria: 3,
+//					},
+//					{
+//						Grade:           []eval.Rating{{eval.Number(0.780)}, {eval.Number(0.268)}, {eval.Number(0.347)}},
+//						CountOfCriteria: 3,
+//					},
+//				},
+//				Criteria: []Criterion{
+//					{
+//						Weight: eval.Rating{eval.Number(0.385)},
+//						TypeOfCriteria: v.Benefit,
+//					},
+//					{
+//						Weight: eval.Rating{eval.Number(0.077)},
+//						TypeOfCriteria: v.Cost,
+//					},{
+//						Weight: eval.Rating{eval.Number(0.538)},
+//						TypeOfCriteria: v.Cost,
+//					},
+//				},
+//				CountCriteria: 3,
+//				CountAlternatives: 3,
+//				HighType: "eval.Number",
+//				FormFs: v.None,
+//			},
+//		},
+//	}
+//
+//	for _, tt := range testCases {
+//		t.Run(tt.name, func(t *testing.T) {
+//			defer goleak.VerifyNone(t)
+//			if err := tt.input.Normalization(tt.optNormValue, tt.optNormWeight); err != nil {
+//				t.Errorf(err.Error())
+//			}
+//
+//			for
+//		})
+//	}
+//}

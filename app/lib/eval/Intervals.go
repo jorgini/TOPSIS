@@ -17,7 +17,7 @@ func (i Interval) CopyEval() Rating {
 }
 
 func (i Interval) String() string {
-	return fmt.Sprintf("[%.2f, %.2f]", i.Start, i.End)
+	return fmt.Sprintf("[%.3f, %.3f]", i.Start, i.End)
 }
 
 func (i Interval) GetType() string {
@@ -122,4 +122,15 @@ func (i Interval) SenguptaGeq(other Interval) bool {
 	} else {
 		return i.ConvertToNumber() > other.ConvertToNumber()
 	}
+}
+
+func (i Interval) Equals(other Evaluated) bool {
+	if other.GetType() != i.GetType() {
+		return false
+	}
+
+	if i.Start.Equals(other.ConvertToInterval().Start) == false || i.End.Equals(other.ConvertToInterval().End) == false {
+		return false
+	}
+	return true
 }

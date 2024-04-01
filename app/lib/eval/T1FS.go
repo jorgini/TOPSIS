@@ -62,10 +62,11 @@ func (t *T1FS) ConvertToNumber() Number {
 
 func (t *T1FS) ConvertToInterval() Interval {
 	if t.Decompose.Start == NumbersMin && t.Decompose.End == NumbersMin {
-		t.Decompose = Interval{0, 0}
+		tmp := Interval{0, 0}
 		for alpha := Number(0.0); alpha <= 1; alpha += Number(1.0 / float64(CountOfAlfaSlices)) {
-			t.Decompose = t.Decompose.Sum(t.MemberFunction(alpha).Weighted(alpha)).ConvertToInterval()
+			tmp = tmp.Sum(t.MemberFunction(alpha).Weighted(alpha)).ConvertToInterval()
 		}
+		t.Decompose = tmp
 	}
 	return t.Decompose
 }
@@ -162,4 +163,18 @@ func (t *T1FS) Sum(other Evaluated) Rating {
 		ret.Vert[i] = t.Vert[i] + other.ConvertToT1FS(v.Default).Vert[i]
 	}
 	return Rating{ret}
+}
+
+func (t *T1FS) Equals(other Evaluated) bool {
+	if other.GetType() != t.GetType() || other.GetForm() != t.GetForm() {
+		return false
+	}
+
+	for i := range t.Vert {
+		if t.Vert[i].Equals(other.ConvertToT1FS(v.Default).Vert[i]) == false {
+			return false
+		}
+	}
+
+	return true
 }

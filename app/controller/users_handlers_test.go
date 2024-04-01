@@ -15,7 +15,7 @@ import (
 	"webApp/configs"
 	"webApp/entity"
 	"webApp/usecase"
-	mock_service "webApp/usecase/mocks"
+	mock_service "webApp/usecase/mocks-service"
 )
 
 func TestHandler_CreateNewUser(t *testing.T) {

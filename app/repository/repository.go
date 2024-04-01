@@ -9,6 +9,8 @@ import (
 	"webApp/lib/matrix"
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks-repository/mock.go
+
 type User interface {
 	CreateNewUser(ctx context.Context, user *entity.UserModel) (int64, error)
 	GetUID(ctx context.Context, user *entity.UserModel) (int64, error)
@@ -74,8 +76,8 @@ type IConnectionFactory interface {
 	StartTransaction() error
 	Rollback() error
 	Commit() error
-	getConnection() Connection
-	closeConnection() error
+	GetConnection() Connection
+	CloseConnection() error
 }
 
 type Repository struct {

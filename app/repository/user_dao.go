@@ -73,7 +73,7 @@ func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (in
 
 	var uid int64
 
-	conn := u.c.getConnection()
+	conn := u.c.GetConnection()
 	if conn == nil {
 		return 0, errors.New("cant connect to db")
 	}
@@ -81,15 +81,15 @@ func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (in
 	logrus.Info(user.Login)
 	row := conn.QueryRowxContext(ctx, query, user.Login, user.Email, user.Password)
 	if err := row.Scan(&uid); err != nil {
-		return 0, errors.Join(err, u.c.closeConnection())
+		return 0, errors.Join(err, u.c.CloseConnection())
 	}
-	return uid, u.c.closeConnection()
+	return uid, u.c.CloseConnection()
 }
 
 func (u *UserDao) GetUID(ctx context.Context, user *entity.UserModel) (int64, error) {
 	query := fmt.Sprintf("SELECT uid FROM %s WHERE %s and password=$2", u.cfg.UserTable, logInBy(user))
 
-	conn := u.c.getConnection()
+	conn := u.c.GetConnection()
 	if conn == nil {
 		return 0, errors.New("cant connect to db")
 	}
@@ -97,48 +97,48 @@ func (u *UserDao) GetUID(ctx context.Context, user *entity.UserModel) (int64, er
 	var uid int64
 	row := conn.QueryRowxContext(ctx, query, logInByValue(user), user.Password)
 	if err := row.Scan(&uid); err != nil {
-		return 0, errors.Join(err, u.c.closeConnection())
+		return 0, errors.Join(err, u.c.CloseConnection())
 	}
-	return uid, u.c.closeConnection()
+	return uid, u.c.CloseConnection()
 }
 
 func (u *UserDao) UpdateUser(ctx context.Context, uid int64, user *entity.UserModel) error {
 	update, ord := getUserUpdateQuery(user)
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE uid=$%d", u.cfg.UserTable, update, ord)
 	logrus.Info(query)
-	conn := u.c.getConnection()
+	conn := u.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if result, err := conn.ExecContext(ctx, query, append(getUserUpdateArgs(user), uid)...); err != nil {
-		return errors.Join(err, u.c.closeConnection())
+		return errors.Join(err, u.c.CloseConnection())
 	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
-		return errors.Join(errors.New("nothing to update"), u.c.closeConnection())
+		return errors.Join(errors.New("nothing to update"), u.c.CloseConnection())
 	}
-	return u.c.closeConnection()
+	return u.c.CloseConnection()
 }
 
 func (u *UserDao) DeleteUser(ctx context.Context, uid int64) error {
 	query := fmt.Sprintf("DELETE FROM %s WHERE uid=$1", u.cfg.UserTable)
 
-	conn := u.c.getConnection()
+	conn := u.c.GetConnection()
 	if conn == nil {
 		return errors.New("cant connect to db")
 	}
 
 	if result, err := conn.ExecContext(ctx, query, uid); err != nil {
-		return errors.Join(err, u.c.closeConnection())
+		return errors.Join(err, u.c.CloseConnection())
 	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
-		return errors.Join(errors.New("nothing to update"), u.c.closeConnection())
+		return errors.Join(errors.New("nothing to update"), u.c.CloseConnection())
 	}
-	return u.c.closeConnection()
+	return u.c.CloseConnection()
 }
 
 func (u *UserDao) GetUserByUID(ctx context.Context, uid int64) (string, error) {
 	query := fmt.Sprintf("SELECT login FROM %s WHERE uid=$1", u.cfg.UserTable)
 
-	conn := u.c.getConnection()
+	conn := u.c.GetConnection()
 	if conn == nil {
 		return "", errors.New("cant connect to db")
 	}

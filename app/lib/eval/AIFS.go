@@ -55,10 +55,11 @@ func (a *AIFS) ConvertToNumber() Number {
 
 func (a *AIFS) ConvertToInterval() Interval {
 	if a.Decompose.Start == NumbersMin && a.Decompose.End == NumbersMin {
-		a.Decompose = Interval{0, 0}
+		tmp := Interval{0, 0}
 		for alpha := Number(0.0); alpha <= 1-a.Pi; alpha += (1.0 - a.Pi) / Number(CountOfAlfaSlices) {
-			a.Decompose = a.Decompose.Sum(a.MemberFunction(alpha).Weighted(Rating{alpha})).ConvertToInterval()
+			tmp = tmp.Sum(a.MemberFunction(alpha).Weighted(Rating{alpha})).ConvertToInterval()
 		}
+		a.Decompose = tmp
 	}
 	return a.Decompose
 }
@@ -84,7 +85,7 @@ func (a *AIFS) ConvertToAIFS(f v.Variants) *AIFS {
 }
 
 func (a *AIFS) ConvertToIT2FS(f v.Variants) *IT2FS {
-	delta1 := a.Pi * (a.Vert[1] - a.Vert[0]) / (2 * (1 - a.Pi))
+	delta1 := Number(math.Min(float64(a.Pi*(a.Vert[1]-a.Vert[0])/(2*(1-a.Pi))), float64(a.Vert[0])))
 	delta2 := a.Pi * (a.Vert[len(a.Vert)-1] - a.Vert[len(a.Vert)-2]) / (2 * (1 - a.Pi))
 
 	if a.Form == f || f == v.Default {
@@ -170,4 +171,15 @@ func (a *AIFS) Sum(other Evaluated) Rating {
 	}
 	ret.Pi = a.Pi + other.ConvertToAIFS(v.Default).Pi
 	return Rating{ret}
+}
+
+func (a *AIFS) Equals(other Evaluated) bool {
+	if other.GetType() != a.GetType() || other.GetForm() != a.GetForm() {
+		return false
+	}
+
+	if a.T1FS.Equals(other.ConvertToAIFS(v.Default).T1FS) == false || a.Pi.Equals(other.ConvertToAIFS(v.Default).Pi) == false {
+		return false
+	}
+	return true
 }

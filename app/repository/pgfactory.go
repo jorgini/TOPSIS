@@ -18,7 +18,7 @@ func NewPgConnectionFactory(db *sqlx.DB) *PgConnectionFactory {
 	}
 }
 
-func (f *PgConnectionFactory) getConnection() Connection {
+func (f *PgConnectionFactory) GetConnection() Connection {
 	if f.conn != nil {
 		return f.conn
 	}
@@ -34,7 +34,7 @@ func (f *PgConnectionFactory) getConnection() Connection {
 
 func (f *PgConnectionFactory) StartTransaction() error {
 	if f.conn != nil {
-		if err := f.closeConnection(); err != nil {
+		if err := f.CloseConnection(); err != nil {
 			return err
 		}
 	}
@@ -58,7 +58,7 @@ func (f *PgConnectionFactory) Rollback() error {
 			return err
 		}
 	case *sqlx.Conn:
-		return errors.Join(errors.New("transaction lost"), f.closeConnection())
+		return errors.Join(errors.New("transaction lost"), f.CloseConnection())
 	default:
 		return errors.New("invalid connection")
 	}
@@ -76,14 +76,14 @@ func (f *PgConnectionFactory) Commit() error {
 			return err
 		}
 	case *sqlx.Conn:
-		return errors.Join(errors.New("transaction lost"), f.closeConnection())
+		return errors.Join(errors.New("transaction lost"), f.CloseConnection())
 	default:
 		return errors.New("invalid connection")
 	}
 	return nil
 }
 
-func (f *PgConnectionFactory) closeConnection() error {
+func (f *PgConnectionFactory) CloseConnection() error {
 	switch f.conn.(type) {
 	case *sqlx.Tx:
 		return nil

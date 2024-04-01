@@ -416,7 +416,7 @@ func (h *Handler) GetExperts(c *fiber.Ctx) error {
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	} else if task.TaskType == v.Individuals {
-		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("individuals task doesnt provide this function"))
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("individual task doesnt provide this function"))
 	}
 
 	users, err := svc.User.GetUsersRelateToTask(c.UserContext(), sid)

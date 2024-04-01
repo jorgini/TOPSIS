@@ -23,7 +23,7 @@ CREATE TABLE tasks
     description     text,
     last_change     timestamp    not null,
     task_type       varchar(255) not null,
-    CHECK (task_type = 'group' OR task_type = 'individuals'),
+    CHECK (task_type = 'group' OR task_type = 'individual'),
     method          varchar(255) not null,
     CHECK (method = 'topsis' OR method = 'smart'),
     calc_settings   bigint      not null,

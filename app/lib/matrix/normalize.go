@@ -10,7 +10,6 @@ import (
 
 func getBestValueWithCond(a, b eval.Evaluated, typeOfCriterion bool) eval.Number {
 	val := []eval.Evaluated{a, b}
-
 	for i := range val {
 		if val[i].GetType() == (eval.Interval{}).GetType() {
 			if typeOfCriterion == v.Benefit {
@@ -72,20 +71,20 @@ func getNormValueByMax(e eval.Evaluated, min, max eval.Number, typeOfCriterion b
 		e.ConvertToAIFS(v.Default).Vert = vertices
 	} else if e.GetType() == (&eval.IT2FS{}).GetType() &&
 		typeOfCriterion == v.Cost {
-		Grade := e.ConvertToIT2FS(v.Default)
-		Bottom := []eval.Interval{{min / Grade.Bottom[1].End,
-			min / Grade.Bottom[1].Start}, {min / Grade.Bottom[0].End,
-			min / Grade.Bottom[0].Start}}
+		grade := e.ConvertToIT2FS(v.Default)
+		Bottom := []eval.Interval{{min / grade.Bottom[1].End,
+			min / grade.Bottom[1].Start}, {min / grade.Bottom[0].End,
+			min / grade.Bottom[0].Start}}
 
 		var Upward []eval.Number
-		if Grade.Form == v.Triangle {
-			Upward = []eval.Number{min / Grade.Upward[0]}
+		if grade.Form == v.Triangle {
+			Upward = []eval.Number{min / grade.Upward[0]}
 		} else {
-			Upward = []eval.Number{min / Grade.Upward[1], min / Grade.Upward[0]}
+			Upward = []eval.Number{min / grade.Upward[1], min / grade.Upward[0]}
 		}
 
-		Grade.Bottom = Bottom
-		Grade.Upward = Upward
+		grade.Bottom = Bottom
+		grade.Upward = Upward
 	} else {
 		e = e.Weighted(1 / max)
 	}

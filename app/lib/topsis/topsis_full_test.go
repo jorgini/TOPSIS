@@ -73,12 +73,33 @@ func TestTableDriven(t *testing.T) {
 			numDist:    v.CbrtDistance,
 			resultRow:  []eval.Number{0.57, 0.63, 0.35, 0.63},
 		},
+		{
+			initMat:    ConvertToTopsisMatrix(matrix.GenerateMatrix(reflect.TypeOf(&eval.AIFS{}), reflect.TypeOf(eval.Interval{}), 100)),
+			valueNorm:  v.NormalizeValueWithMax,
+			weightNorm: v.NormalizeWeightsByMidPoint,
+			idelaAlg:   v.Default,
+			fsDist:     v.AlphaSlices,
+			intDist:    v.Default,
+			numDist:    v.CbrtDistance,
+			resultRow:  []eval.Number{0.604, 0.472, 0.445, 0.314},
+		},
+		{
+			initMat:    ConvertToTopsisMatrix(matrix.GenerateMatrix(reflect.TypeOf(&eval.IT2FS{}), reflect.TypeOf(eval.Interval{}), 108)),
+			valueNorm:  v.NormalizeValueWithMax,
+			weightNorm: v.NormalizeWeightsByMidPoint,
+			idelaAlg:   v.Default,
+			fsDist:     v.AlphaSlices,
+			intDist:    v.Default,
+			numDist:    v.CbrtDistance,
+			resultRow:  []eval.Number{0.301, 0.334, 0.292},
+		},
 	}
-
+	fmt.Println(tests[4].initMat)
 	for i, tt := range tests {
 		testname := fmt.Sprintf("%d test", i)
 		t.Run(testname, func(t *testing.T) {
 			defer goleak.VerifyNone(t)
+			fmt.Println(tt.initMat.String())
 			if res, err := TopsisCalculating(tt.initMat, tt.valueNorm, tt.weightNorm, tt.idelaAlg, tt.fsDist,
 				tt.intDist, tt.numDist); err != nil {
 				t.Errorf(err.Error())
@@ -89,6 +110,7 @@ func TestTableDriven(t *testing.T) {
 					}
 				}
 			}
+			tt.initMat.Result()
 		})
 	}
 }
