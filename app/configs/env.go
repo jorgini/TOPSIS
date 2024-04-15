@@ -24,13 +24,14 @@ type DbConfig struct {
 }
 
 type AppConfig struct {
-	Host       string
-	Port       string
-	ClaimsKey  string
-	SignKey    string
-	CookieName string
-	AccessTTL  time.Duration
-	RefreshTTL time.Duration
+	Host        string
+	Port        string
+	ClaimsKey   string
+	SignKey     string
+	CookieName  string
+	AccessTTL   time.Duration
+	RefreshTTL  time.Duration
+	FrontendURL string
 }
 
 type Config struct {
@@ -51,7 +52,8 @@ func SetConfig() *Config {
 			User: os.Getenv("PGUSER"), Password: os.Getenv("PGPASS"), Database: os.Getenv("PGDB")},
 		AppConfig: AppConfig{Host: os.Getenv("HOST"), Port: os.Getenv("PORT"),
 			ClaimsKey: os.Getenv("CLAIMSKEY"), SignKey: os.Getenv("SIGNKEY"), CookieName: os.Getenv("COOKIE"),
-			AccessTTL: AccessTtl, RefreshTTL: RefreshTtl},
+			FrontendURL: os.Getenv("FRONTENDURL"),
+			AccessTTL:   AccessTtl, RefreshTTL: RefreshTtl},
 		DbConfig: DbConfig{UserTable: os.Getenv("USERSTAB"), MatrixTable: os.Getenv("MATRIXTAB"),
 			TaskTable: os.Getenv("TASKTAB"), FinalTable: os.Getenv("FINALTAB"), SessionTable: os.Getenv("SESSIONTAB")},
 	}

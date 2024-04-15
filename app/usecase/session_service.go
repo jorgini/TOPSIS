@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
 	"webApp/configs"
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	charset = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890`!@#$%^&*()_+{}:[];'./,<>?=-~"
+	charset = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890`!@#$%^&*()_+{}:[]'./,<>?=-~"
 )
 
 type SessionService struct {
@@ -64,7 +63,6 @@ func (s *SessionService) GenerateToken(ctx context.Context, uid int64, cfg *conf
 func (s *SessionService) RefreshToken(ctx context.Context, refresh string, cfg *configs.AppConfig) (entity.Tokens, error) {
 	uid, err := s.repo.GetUIDByToken(ctx, refresh)
 	if err != nil {
-		logrus.Error("here")
 		return entity.Tokens{}, err
 	}
 

@@ -34,42 +34,11 @@ func TestHandler_CreateTask(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "description": "description", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
-			inputTask: entity.TaskModel{
-				Title:        "title",
-				Description:  "description",
-				MaintainerID: 1,
-				TaskType:     "individual",
-				Method:       "topsis",
-				CalcSettings: 42,
-				LingScale:    *eval.DefaultT1FSScale,
-				Status:       entity.Draft,
-			},
+			inputBody: `{"title": "title"}`,
+			inputTask: entity.GetDefaultTask("title", 1),
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
-				r.EXPECT().CreateNewTask(context.Background(), task).Return(int64(1), nil)
-			},
-			expectedStatusCode:   200,
-			expectedResponseBody: `{"message":"success"}`,
-		},
-		{
-			name: "Partition request",
-			userIdentify: func(c *fiber.Ctx) (int64, error) {
-				return 1, nil
-			},
-			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
-			inputTask: entity.TaskModel{
-				Title:        "title",
-				MaintainerID: 1,
-				TaskType:     "individual",
-				Method:       "topsis",
-				CalcSettings: 42,
-				LingScale:    *eval.DefaultT1FSScale,
-				Status:       entity.Draft,
-			},
-			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
-				di.EXPECT().GetInstanceService().Return(svc)
-				r.EXPECT().CreateNewTask(context.Background(), task).Return(int64(1), nil)
+				r.EXPECT().CreateNewTask(context.Background(), task.Title, task.MaintainerID).Return(int64(1), nil)
 			},
 			expectedStatusCode:   200,
 			expectedResponseBody: `{"message":"success"}`,
@@ -79,12 +48,12 @@ func TestHandler_CreateTask(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individual", "method": "topsisss", "calc_settings": 42}`,
+			inputBody: `{}`,
 			inputTask: entity.TaskModel{},
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 			},
 			expectedStatusCode:   400,
-			expectedResponseBody: `{"message":"invalid input arguments for task, check required fields"}`,
+			expectedResponseBody: `{"message":"invalid empty title"}`,
 		},
 		{
 			name: "Server error",
@@ -101,19 +70,11 @@ func TestHandler_CreateTask(t *testing.T) {
 			userIdentify: func(c *fiber.Ctx) (int64, error) {
 				return 1, nil
 			},
-			inputBody: `{"title": "title", "task_type": "individual", "method": "topsis", "calc_settings": 42}`,
-			inputTask: entity.TaskModel{
-				Title:        "title",
-				MaintainerID: 1,
-				TaskType:     "individual",
-				Method:       "topsis",
-				CalcSettings: 42,
-				LingScale:    *eval.DefaultT1FSScale,
-				Status:       entity.Draft,
-			},
+			inputBody: `{"title": "title"}`,
+			inputTask: entity.GetDefaultTask("title", 1),
 			mockBehavior: func(r *mock_service.MockTask, di *mock_service.MockDiService, task *entity.TaskModel, svc *usecase.Service) {
 				di.EXPECT().GetInstanceService().Return(svc)
-				r.EXPECT().CreateNewTask(context.Background(), task).Return(int64(0), errors.New("something went wrong"))
+				r.EXPECT().CreateNewTask(context.Background(), task.Title, task.MaintainerID).Return(int64(0), errors.New("something went wrong"))
 			},
 			expectedStatusCode:   500,
 			expectedResponseBody: `{"message":"something went wrong"}`,

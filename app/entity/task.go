@@ -4,8 +4,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"time"
+	"webApp/lib"
 	"webApp/lib/eval"
+	v "webApp/lib/variables"
 )
 
 const (
@@ -32,7 +35,33 @@ type TaskModel struct {
 	Status         bool                 `json:"status" db:"status"`
 }
 
+func GetDefaultTask(title string, uid int64) TaskModel {
+	settings := lib.CalcSettings{
+		ValueNorm:   v.NormalizeWithSum,
+		WeighNorm:   v.NormalizeWithSum,
+		RankingAlg:  v.Default,
+		FsDist:      v.Default,
+		IntDist:     v.Default,
+		NumDist:     v.SqrtDistance,
+		Aggregating: v.AggregateMatrix,
+	}
+	logrus.Info(settings.Comprise())
+	task := TaskModel{
+		Title:        title,
+		MaintainerID: uid,
+		Description:  "",
+		Password:     "qwerty",
+		TaskType:     Individual,
+		Method:       v.SMART,
+		CalcSettings: settings.Comprise(),
+		LingScale:    *eval.DefaultNumberScale,
+		Status:       Draft,
+	}
+	return task
+}
+
 type TaskShortCard struct {
+	SID         int64     `json:"sid"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Method      string    `json:"method"`

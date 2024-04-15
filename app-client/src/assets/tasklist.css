@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+.col {
+    text-align: center;
+    max-height: 12vh;
+}
+
+.blk-btn {
+    font-size: 2.3vmin;
+}
+
+.selector {
+    height: 30%;
+    margin: auto;
+}
+
+.annot {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2vmin;
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.value {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.3vmin;
+    font-weight: bolder;
+    text-align: center;
+    margin: 0 auto 0 auto;
+}
+
+.deleter {
+    mix-blend-mode: multiply;
+    border: 0;
+    border-radius: 100%;
+    height: 7vh;
+    width: auto;
+    padding: 0;
+}
+
+.deleter img {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    border-radius: 100%;
+    filter: contrast(300%);
+}
+
+.error {
+    width: fit-content;
+    margin: 2vmin auto auto 3vmin;
+    font-size: 2.5vmin;
+}

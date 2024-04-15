@@ -33,8 +33,7 @@ const (
 	SqrtDistance               = 0b00101
 	CbrtDistance               = 0b00110
 	AggregateMatrix            = 0b00111
-	AggregateDist              = 0b01000
-	AggregateScores            = 0b01001
+	AggregateFinals            = 0b01000
 	Default                    = 0b01010
 )
 

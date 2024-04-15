@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"webApp/entity"
 	"webApp/repository"
 )
@@ -45,13 +44,12 @@ func (f *FinalService) PresentFinal(ctx context.Context, sid int64, threshold fl
 
 	prev, err := f.GetFinal(ctx, sid)
 	if err == nil {
-		logrus.Info()
-		if task.LastChangesAt.Before(prev.LastChange) && (threshold == prev.Threshold || threshold == 0) {
+		if task.LastChangesAt.Before(prev.LastChange) && (threshold == prev.Threshold || threshold == -1) {
 			return prev, nil
 		}
 	}
 
-	if threshold == 0 {
+	if threshold == -1 {
 		if err == nil {
 			threshold = prev.Threshold
 		} else {

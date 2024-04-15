@@ -502,7 +502,7 @@ func TestHandler_RefreshToken(t *testing.T) {
 				s.EXPECT().RefreshToken(context.Background(), refresh, cfg).Return(tokens, nil)
 			},
 			expectedStatusCode:   200,
-			expectedResponseBody: `{"access":"access"}`,
+			expectedResponseBody: `{"token":"access"}`,
 			expectedCookie:       1,
 		},
 		{

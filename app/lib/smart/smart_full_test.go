@@ -91,13 +91,14 @@ func TestTableDriven(t *testing.T) {
 			if res, err := SmartCalculating(tt.initMat, tt.valueNorm, tt.weightNorm); err != nil {
 				t.Errorf(err.Error())
 			} else {
+				fmt.Println(tt.initMat.RankedList(v.Default))
+				fmt.Println(tt.initMat.FinalScores)
 				for i, el := range res {
 					if !el.Equals(tt.resultRow[i]) {
 						t.Errorf("got %s, want %s\n", el.String(), tt.resultRow[i].String())
 					}
 				}
 			}
-			fmt.Println(tt.initMat.Result())
 		})
 	}
 }

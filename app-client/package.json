@@ -9,9 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.21"
+    "@vueuse/core": "^10.9.0",
+    "axios": "^1.6.8",
+    "js-yaml": "^4.1.0",
+    "vue": "^3.4.21",
+    "vuex": "^4.1.0",
+    "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
+    "@modyfi/vite-plugin-yaml": "^1.1.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.2.0"
   }

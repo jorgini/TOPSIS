@@ -38,6 +38,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 
 	userGroup := api.Group("/user")
 	{
+		userGroup.Post("/", h.CreateTask)
 		userGroup.Get("/", h.GetAllSolutions)
 		userGroup.Delete("/tasks", h.DeleteTask)
 		userGroup.Patch("/settings", h.UpdateUser)
@@ -48,7 +49,6 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 	{
 		solSettings := solGroup.Group("/settings")
 		{
-			solSettings.Post("/", h.CreateTask)
 			solSettings.Put("/", h.UpdateTask)
 			solSettings.Patch("/experts", h.DeactivateStatuses)
 			solSettings.Get("/", h.GetTask)
@@ -69,7 +69,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 			solCriteria.Get("/", h.GetCriteria)
 		}
 
-		solGroup.Get("/connect", h.ConnectToTask)
+		solGroup.Post("/connect", h.ConnectToTask)
 
 		solRating := solGroup.Group("/rating")
 		{
@@ -83,6 +83,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 		{
 			solExperts.Get("/", h.GetExperts)
 			solExperts.Put("/", h.SetExpertsWeights)
+			solExperts.Get("/role", h.GetRole)
 		}
 
 		solGroup.Post("/final", h.GetFinal)

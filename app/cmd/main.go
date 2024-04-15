@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/gofiber/swagger"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -22,8 +23,9 @@ import (
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
-
 func main() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
+
 	app := fiber.New(fiber.Config{})
 
 	config := configs.SetConfig()
@@ -34,6 +36,14 @@ func main() {
 	}()
 
 	hand := controller.NewHandler(di, &config.AppConfig)
+
+	// Configure CORS for frontend
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.AppConfig.FrontendURL,
+		AllowHeaders:     "Authorization, Origin, Content-Type, Accept",
+		AllowMethods:     "GET,POST,PUT,DELETE,PATCH",
+		AllowCredentials: true,
+	}))
 
 	app.Route("/", hand.SetAllRoutes)
 

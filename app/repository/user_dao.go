@@ -78,7 +78,6 @@ func (u *UserDao) CreateNewUser(ctx context.Context, user *entity.UserModel) (in
 		return 0, errors.New("cant connect to db")
 	}
 
-	logrus.Info(user.Login)
 	row := conn.QueryRowxContext(ctx, query, user.Login, user.Email, user.Password)
 	if err := row.Scan(&uid); err != nil {
 		return 0, errors.Join(err, u.c.CloseConnection())

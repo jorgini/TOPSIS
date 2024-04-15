@@ -221,18 +221,18 @@ func (mr *MockTaskMockRecorder) ConnectToTask(ctx, sid, password any) *gomock.Ca
 }
 
 // CreateNewTask mocks base method.
-func (m *MockTask) CreateNewTask(ctx context.Context, task *entity.TaskModel) (int64, error) {
+func (m *MockTask) CreateNewTask(ctx context.Context, title string, uid int64) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNewTask", ctx, task)
+	ret := m.ctrl.Call(m, "CreateNewTask", ctx, title, uid)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateNewTask indicates an expected call of CreateNewTask.
-func (mr *MockTaskMockRecorder) CreateNewTask(ctx, task any) *gomock.Call {
+func (mr *MockTaskMockRecorder) CreateNewTask(ctx, title, uid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewTask", reflect.TypeOf((*MockTask)(nil).CreateNewTask), ctx, task)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewTask", reflect.TypeOf((*MockTask)(nil).CreateNewTask), ctx, title, uid)
 }
 
 // DeleteTask mocks base method.

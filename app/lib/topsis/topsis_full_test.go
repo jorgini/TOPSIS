@@ -110,7 +110,6 @@ func TestTableDriven(t *testing.T) {
 					}
 				}
 			}
-			tt.initMat.Result()
 		})
 	}
 }

@@ -8,7 +8,7 @@ import (
 	v "webApp/lib/variables"
 )
 
-func PositiveIdealRateAIFS(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+func positiveIdealRateAIFS(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
 	var wg sync.WaitGroup
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
@@ -51,11 +51,11 @@ func PositiveIdealRateAIFS(alts []matrix.Alternative, Criteria []matrix.Criterio
 	return positive, err
 }
 
-func NegativeIdealRateAIFS(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
-	return PositiveIdealRateAIFS(alts, matrix.ChangeTypes(Criteria))
+func negativeIdealRateAIFS(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+	return positiveIdealRateAIFS(alts, matrix.ChangeTypes(Criteria))
 }
 
-func PositiveIdealRateT1FS(alts []matrix.Alternative, Criteria []matrix.Criterion, Form v.Variants) (*matrix.Alternative, error) {
+func positiveIdealRateT1FS(alts []matrix.Alternative, Criteria []matrix.Criterion, Form v.Variants) (*matrix.Alternative, error) {
 	var wg sync.WaitGroup
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
@@ -134,11 +134,11 @@ func PositiveIdealRateT1FS(alts []matrix.Alternative, Criteria []matrix.Criterio
 	return positive, err
 }
 
-func NegativeIdealRateT1FS(alts []matrix.Alternative, Criteria []matrix.Criterion, Form v.Variants) (*matrix.Alternative, error) {
-	return PositiveIdealRateT1FS(alts, matrix.ChangeTypes(Criteria), Form)
+func negativeIdealRateT1FS(alts []matrix.Alternative, Criteria []matrix.Criterion, Form v.Variants) (*matrix.Alternative, error) {
+	return positiveIdealRateT1FS(alts, matrix.ChangeTypes(Criteria), Form)
 }
 
-func PositiveIdealRateInterval(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+func positiveIdealRateInterval(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
 	var wg sync.WaitGroup
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
@@ -179,11 +179,11 @@ func PositiveIdealRateInterval(alts []matrix.Alternative, Criteria []matrix.Crit
 	return positive, err
 }
 
-func NegativeIdealRateInterval(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
-	return PositiveIdealRateInterval(alts, matrix.ChangeTypes(Criteria))
+func negativeIdealRateInterval(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+	return positiveIdealRateInterval(alts, matrix.ChangeTypes(Criteria))
 }
 
-func PositiveIdealRateNumber(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+func positiveIdealRateNumber(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
 	var wg sync.WaitGroup
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
@@ -237,6 +237,6 @@ func PositiveIdealRateNumber(alts []matrix.Alternative, Criteria []matrix.Criter
 	return positive, err
 }
 
-func NegativeIdealRateNumber(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
-	return PositiveIdealRateNumber(alts, matrix.ChangeTypes(Criteria))
+func negativeIdealRateNumber(alts []matrix.Alternative, Criteria []matrix.Criterion) (*matrix.Alternative, error) {
+	return positiveIdealRateNumber(alts, matrix.ChangeTypes(Criteria))
 }
