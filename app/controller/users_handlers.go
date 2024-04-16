@@ -113,6 +113,32 @@ func (h *Handler) LogIn(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"token": tokens.Access})
 }
 
+type UserUpdateInfo struct {
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (u *UserUpdateInfo) UnmarshalJSON(data []byte) error {
+	result := struct {
+		Login    string `json:"login"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return err
+	}
+
+	if result.Email == "" && result.Password == "" && result.Login == "" {
+		return errors.New("invalid input data for update user")
+	} else {
+		u.Login = result.Login
+		u.Email = result.Email
+		u.Password = result.Password
+	}
+	return nil
+}
+
 // UpdateUser godoc
 // @summary UpdateUser
 // @description update account info
@@ -121,7 +147,7 @@ func (h *Handler) LogIn(c *fiber.Ctx) error {
 // @tags user
 // @accept json
 // @produce json
-// @param input body UserInput true "update account info"
+// @param input body UserUpdateInfo true "update account info"
 // @success 200 {object} response
 // @failure 400 {object} response
 // @failure 401 {string} string
@@ -133,11 +159,12 @@ func (h *Handler) UpdateUser(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 
-	var update UserInput
+	var update UserUpdateInfo
 	if err := c.BodyParser(&update); err != nil {
 		return sendErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 	user := entity.UserModel{
+		Login:    update.Login,
 		Email:    update.Email,
 		Password: update.Password,
 	}
@@ -173,6 +200,32 @@ func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 	return c.JSON(response{Message: "success"})
+}
+
+// GetUser godoc
+// @summary GetUser
+// @description gets user account info
+// @security ApiKeyAuth
+// @id get-user
+// @tags user
+// @accept json
+// @produce json
+// @success 200 {object} entity.UserModel
+// @failure 401 {object} response
+// @failure 500 {object} response
+// @router /user/settings [get]
+func (h *Handler) GetUser(c *fiber.Ctx) error {
+	uid, err := h.userIdentity(c)
+	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	service := h.di.GetInstanceService()
+	if user, err := service.User.GetUserInfo(c.UserContext(), uid); err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	} else {
+		return c.JSON(user)
+	}
 }
 
 // RefreshToken godoc

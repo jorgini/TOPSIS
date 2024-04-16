@@ -50,13 +50,18 @@ func (u *UserService) GetUsersRelateToTask(ctx context.Context, sid int64) ([]en
 
 	experts := make([]entity.Expert, len(uids))
 	for i := range experts {
-		experts[i].Login, err = u.repo.GetUserByUID(ctx, uids[i].UID)
-		experts[i].Status = uids[i].Status
+		tmp, err := u.repo.GetUserByUID(ctx, uids[i].UID)
 		if err != nil {
 			return nil, err
 		}
+		experts[i].Login = tmp.Login
+		experts[i].Status = uids[i].Status
 	}
 	return experts, nil
+}
+
+func (u *UserService) GetUserInfo(ctx context.Context, uid int64) (*entity.UserModel, error) {
+	return u.repo.GetUserByUID(ctx, uid)
 }
 
 func getPasswordHash(password string) string {

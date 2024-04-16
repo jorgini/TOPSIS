@@ -74,17 +74,6 @@
 <style scoped>
   @import "../style.css";
 
-  .header {
-    position: static;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .header > * {
-    margin: auto 2vmin;
-  }
-
   .info {
     display: block;
     text-align: center;

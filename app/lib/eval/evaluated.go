@@ -44,6 +44,8 @@ func (r *Rating) MarshalJSON() ([]byte, error) {
 		return json.Marshal(r.Evaluated.ConvertToIT2FS(v.Default))
 	case *AIFS:
 		return json.Marshal(r.Evaluated.ConvertToAIFS(v.Default))
+	case nil:
+		return json.Marshal(nil)
 	default:
 		return nil, v.IncompatibleTypes
 	}

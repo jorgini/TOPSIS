@@ -105,6 +105,12 @@
     rotate: 0deg;
 }
 
+.about {
+    height: 5vmin;
+    width: auto;
+    margin: auto auto 1.5vmin 2vmin;
+}
+
 .left-arrow {
     margin: 1.5vmin 1vmin auto 1.5vmin;
     align-items: start;

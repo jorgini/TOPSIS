@@ -2,7 +2,7 @@ build:
 	docker compose build
 
 run:
-	docker compose up server client
+	docker compose up
 
 test:
 	go test -v ./app

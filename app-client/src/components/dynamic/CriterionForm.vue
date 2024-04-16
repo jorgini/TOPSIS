@@ -1,5 +1,6 @@
 <script setup>
-  const criterion = defineModel();
+  const criterion = defineModel('criterion');
+  const role = defineModel('role');
 </script>
 
 <script>
@@ -18,9 +19,11 @@
     },
     methods: {
       validate() {
-        this.isValidTitle = this.modelValue.title.length > 0 && this.modelValue.title.length < 101;
+        this.isValidTitle = this.criterion.title.length > 0 && this.criterion.title.length < 101;
       },
       deleteAlt() {
+        if (this.role === 'expert')
+          return
         this.$emit('delete-criterion', null);
       },
       switchDisc() {
@@ -28,27 +31,27 @@
       },
       changeWeight() {
         if (this.selectedOpt === 'Число') {
-          this.modelValue.weight = 0.0
+          this.criterion.weight = 0.0
         } else {
-          this.modelValue.weight = {start: 0.0, end: 0.0}
+          this.criterion.weight = {start: 0.0, end: 0.0}
         }
       },
       changeType() {
         if (this.selectedType === 'Преимущественный') {
-          this.modelValue.type_of_criterion = true;
+          this.criterion.type_of_criterion = true;
         } else {
-          this.modelValue.type_of_criterion = false;
+          this.criterion.type_of_criterion = false;
         }
       }
     },
     mounted() {
-      if (this.modelValue.weight === null|| typeof this.modelValue.weight === 'number') {
+      if (this.criterion.weight === null|| typeof this.criterion.weight === 'number') {
         this.selectedOpt = 'Число';
       } else {
         this.selectedOpt = 'Интервал';
       }
 
-      if (!this.modelValue.type_of_criterion) {
+      if (!this.criterion.type_of_criterion) {
         this.selectedType = 'Затратный';
       }
     }
@@ -62,7 +65,7 @@
         <p>Название:</p>
       </div>
       <div class="col-6">
-        <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title"
+        <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title" :readonly="role==='expert'"
                placeholder="title" maxlength="100" v-model="criterion.title" @input="validate" required/>
       </div>
       <div class="col-3 right-col">
@@ -76,7 +79,7 @@
       </div>
       <div class="col-6">
         <textarea type="text" :class="{field: true, invisible: !isVisitableDisc}" name="description"
-                  placeholder="description" maxlength="1000" v-model="criterion.description"/>
+                  :readonly="role==='expert'" placeholder="description" maxlength="1000" v-model="criterion.description"/>
       </div>
       <div class="col-3"></div>
     </div>
@@ -85,14 +88,14 @@
         <p>Вес:</p>
       </div>
       <div class="col-9">
-        <select v-model="selectedOpt" @change="changeWeight">
+        <select v-model="selectedOpt" :disabled="role==='expert'" @change="changeWeight">
           <option>Число</option>
           <option>Интервал</option>
         </select>
-        <NumberForm v-if="selectedOpt==='Число'" v-model="criterion.weight" @corr-rate="this.$emit('corr-rate')"
-                    @incorr-rate="this.$emit('incorr-rate')"></NumberForm>
-        <IntervalForm v-if="selectedOpt==='Интервал'" v-model="criterion.weight" @corr-rate="this.$emit('corr-rate')"
-                      @incorr-rate="this.$emit('incorr-rate')"></IntervalForm>
+        <NumberForm v-if="selectedOpt==='Число'" v-model:role="role" v-model="criterion.weight"
+                    @corr-rate="this.$emit('corr-rate')" @incorr-rate="this.$emit('incorr-rate')"></NumberForm>
+        <IntervalForm v-if="selectedOpt==='Интервал'" v-model:role="role" v-model="criterion.weight"
+                      @corr-rate="this.$emit('corr-rate')" @incorr-rate="this.$emit('incorr-rate')"></IntervalForm>
       </div>
     </div>
     <div class="row-cols-3">
@@ -100,7 +103,7 @@
         <p>Тип критерия:</p>
       </div>
       <div class="col-9">
-        <select v-model="selectedType" @change="changeType">
+        <select v-model="selectedType" :disabled="role==='expert'" @change="changeType">
           <option>Преимущественный</option>
           <option>Затратный</option>
         </select>

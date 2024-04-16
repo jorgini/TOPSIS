@@ -11,6 +11,7 @@ import CriteriaSetting from "./components/CriteriaSetting.vue";
 import RatingSetting from "./components/RatingSetting.vue";
 import Final from "./components/Final.vue";
 import ErrorPage from "./components/ErrorPage.vue";
+import UserSetting from "./components/UserSetting.vue";
 
 const { pause, resume, isActive } = useIntervalFn(() => {
     if (Date.now() > store.getters['getExpiredAt']) {
@@ -29,4 +30,5 @@ createApp(App)
     .component('Ratings', RatingSetting)
     .component('Final', Final)
     .component('ErrorPage', ErrorPage)
+    .component('UserSet', UserSetting)
     .mount('#app');

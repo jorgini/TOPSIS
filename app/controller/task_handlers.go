@@ -176,6 +176,7 @@ func (h *Handler) GetTask(c *fiber.Ctx) error {
 	if err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
+
 	output := TaskInput{
 		SID:          task.SID,
 		Title:        task.Title,
@@ -227,6 +228,20 @@ func (h *Handler) DeleteTask(c *fiber.Ctx) error {
 	return c.JSON(response{Message: "success"})
 }
 
+// GetRole godoc
+// @summary GetRole
+// @description gets a role of user for current task
+// @security ApiKeyAuth
+// @id get-task-password
+// @tags task
+// @accept json
+// @produce json
+// @param sid query int true "task identifier"
+// @success 200 {object} response
+// @success 403 {object} response
+// @success 404 {object} response
+// @failure 500 {object} response
+// @router /solution/experts/role [get]
 func (h *Handler) GetRole(c *fiber.Ctx) error {
 	uid, err := h.userIdentity(c)
 	if err != nil {

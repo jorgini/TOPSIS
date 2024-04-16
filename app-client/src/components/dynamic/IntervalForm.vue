@@ -1,5 +1,6 @@
 <script setup>
 const int = defineModel();
+const role = defineModel('role');
 </script>
 
 <script>
@@ -20,6 +21,7 @@ const int = defineModel();
       },
       validateStart() {
         this.isValidStart = (this.modelValue.start >= 0 && this.modelValue.start < 2_147_483_648);
+        this.isValidStart &= this.modelValue.start !== '';
         if (this.isValidStart) {
           this.normalize();
           this.$emit('corr-rate');
@@ -29,12 +31,17 @@ const int = defineModel();
       },
       validateEnd() {
         this.isValidEnd = (this.modelValue.end >= 0 && this.modelValue.end < 2_147_483_648 && (this.modelValue.end >= this.modelValue.start));
+        this.isValidEnd &= this.modelValue.end !== '';
         if (this.isValidStart && this.isValidEnd) {
           this.$emit('corr-rate');
         } else {
           this.$emit('incorr-rate');
         }
       }
+    },
+    mounted() {
+      this.validateEnd();
+      this.validateStart();
     }
   }
 </script>
@@ -42,10 +49,10 @@ const int = defineModel();
 <template>
   <div class="interval">
     <p>a:</p>
-    <input type="number" :class="{field: true, invalid: !isValidStart}" name="start"
+    <input type="number" :class="{field: true, invalid: !isValidStart}" name="start" :disabled="role === 'expert'"
            placeholder="0.0" maxlength="10" v-model="int.start" @input="validateStart">
     <p>b:</p>
-    <input type="number" :class="{field: true, invalid: !isValidEnd}" name="end"
+    <input type="number" :class="{field: true, invalid: !isValidEnd}" name="end" :disabled="role === 'expert'"
            placeholder="0.0" maxlength="10" v-model="int.end" @input="validateEnd">
   </div>
 </template>

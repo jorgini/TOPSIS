@@ -1,5 +1,6 @@
 <script>
   import Task from "./dynamic/TaskShortcard.vue";
+  import axios from "axios";
   export default {
     emits: ['show-component'],
     components: {Task},
@@ -20,13 +21,16 @@
         this.isValidSID = (this.sid > 0);
       },
       validatePassword() {
-        this.isValidPassword = (this.password.length > 4 && this.password.length < 101);
+        this.isValidPassword = (this.password.length >= 4 && this.password.length < 101);
       },
       validateTitle() {
         this.isValidTitle = (this.title.length > 0 && this.title.length < 101);
       },
       showMain() {
         return this.$emit('show-component', 'Main');
+      },
+      showSetting() {
+        this.$emit('show-component', 'UserSet');
       },
       async confirmCreate() {
         this.validateTitle();
@@ -79,7 +83,7 @@
           return
         }
 
-        await this.$store.dispatch('connectToTask')
+        await this.$store.dispatch('connectToTask', {sid: this.sid, pass: this.password})
         if (this.$store.getters['errorOccurred']) {
           this.$emit('show-component', 'ErrorPage');
         } else {
@@ -91,7 +95,37 @@
           
           this.$emit('show-component', 'Ratings');
         }
-      }
+      },
+      async downloadFiles() {
+        try {
+          const response = await axios.get('/Вычислительная схема.pdf', {
+            responseType: 'blob',
+          });
+
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', 'Вычислительная схема.pdf');
+          document.body.appendChild(link);
+          link.click();
+
+          const response2 = await axios.get('/Требования к входным данным.pdf', {
+            responseType: 'blob',
+          });
+
+          const url2 = window.URL.createObjectURL(new Blob([response2.data]));
+          const link2 = document.createElement('a');
+          link2.href = url2;
+          link2.setAttribute('download', 'Требования к входным данным.pdf');
+          document.body.appendChild(link2);
+          link2.click();
+        } catch (error) {
+          console.error('Ошибка при скачивании файла:', error);
+          this.$store.commit('setError', error);
+          this.$store.commit('setStatus', 500);
+          this.$emit('show-component', 'ErrorPage');
+        }
+      },
     },
     async mounted() {
       await this.$store.dispatch('takeTasks');
@@ -147,8 +181,8 @@
   </div>
 
   <div class="footer container-fluid bottom-0">
-    <button class="about"><img alt="about" src="/about.png" width="100%"></button>
-    <button class="settings"><img alt="settings" src="/settings.png" width="100%"></button>
+    <img alt="about" src="/about.png" class="about" @click="downloadFiles">
+    <img alt="settings" src="/settings.png" class="settings" @click="showSetting">
   </div>
 </template>
 

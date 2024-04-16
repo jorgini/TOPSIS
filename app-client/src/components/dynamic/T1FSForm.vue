@@ -23,7 +23,7 @@ const t1fs = defineModel();
         }
       },
       normalize(i) {
-        for (let k = i + 1; k < this.modelValue.length; ++k) {
+        for (let k = i + 1; k < this.modelValue.vert.length; ++k) {
           if (this.modelValue.vert[i] > this.modelValue.vert[k]) {
             this.modelValue.vert[k] = this.modelValue.vert[i];
             this.isValid[k] = true;
@@ -32,6 +32,7 @@ const t1fs = defineModel();
       },
       validateNumber(i) {
         this.isValid[i] = this.modelValue.vert[i] >= 0 && this.modelValue.vert[i] < 2_147_483_648;
+        this.isValid[i] &= this.modelValue.vert[i] !== '';
         for (let k = 0; k < i; ++k) {
           this.isValid[i] &= (this.modelValue.vert[k] <= this.modelValue.vert[i]);
         }
@@ -52,6 +53,9 @@ const t1fs = defineModel();
       } else {
         this.selectedFig = 'Трапеция';
       }
+
+      for (let k = 0; k < this.modelValue.vert.length; k++)
+        this.validateNumber(k);
     }
   }
 </script>

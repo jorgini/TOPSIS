@@ -67,8 +67,9 @@ export default {
       }
     },
     validateBottom(i) {
-      const x = i % 2 === 0 ? this.modelValue.bottom[i / 2].start : this.modelValue.bottom[i / 2].end;
+      const x = i % 2 === 0 ? this.modelValue.bottom[Math.floor(i / 2)].start : this.modelValue.bottom[Math.floor(i / 2)].end;
       this.isValidBottom[i] = x >= 0 && x < 2_147_483_648;
+      this.isValidBottom[i] &= x !== '';
       if (i > 1) {
         this.isValidBottom[i] &= this.modelValue.bottom[1].start <= x &&
             this.modelValue.bottom[0].end <= x && this.modelValue.bottom[0].start <= x;
@@ -93,6 +94,7 @@ export default {
     validateUpward(i) {
       const x = this.modelValue.upward[i];
       this.isValidUpward[i] = x >= 0 && x <= 2_147_483_648;
+      this.isValidUpward[i] &= x !== '';
       this.isValidUpward[i] &= this.modelValue.upward[0] <= x && this.modelValue.bottom[0].end <= x && this.modelValue.bottom[0].start <= x;
 
       if (this.isValidUpward[i])
@@ -127,7 +129,7 @@ export default {
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[0].start" @input="validateBottom(0)">
 
     <p>^a:</p>
-    <input type="number" :class="{field: true, invalid: !isValidBottom[2]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidBottom[1]}" name="vert"
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[0].end" @input="validateBottom(1)">
 
     <p>b:</p>

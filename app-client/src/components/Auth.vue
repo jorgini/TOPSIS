@@ -1,4 +1,6 @@
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
@@ -80,6 +82,36 @@ export default {
       } else {
         this.type = 'signup';
       }
+    },
+    async downloadFiles() {
+      try {
+        const response = await axios.get('/Вычислительная схема.pdf', {
+          responseType: 'blob',
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'Вычислительная схема.pdf');
+        document.body.appendChild(link);
+        link.click();
+
+        const response2 = await axios.get('/Требования к входным данным.pdf', {
+          responseType: 'blob',
+        });
+
+        const url2 = window.URL.createObjectURL(new Blob([response2.data]));
+        const link2 = document.createElement('a');
+        link2.href = url2;
+        link2.setAttribute('download', 'Требования к входным данным.pdf');
+        document.body.appendChild(link2);
+        link2.click();
+      } catch (error) {
+        console.error('Ошибка при скачивании файла:', error);
+        this.$store.commit('setError', error);
+        this.$store.commit('setStatus', 500);
+        this.$emit('show-component', 'ErrorPage');
+      }
     }
   }
 }
@@ -117,7 +149,7 @@ export default {
   </div>
 
   <div class="footer">
-    <button class="about"><img alt="about" src="/about.png" width="100%"></button>
+    <img alt="about" src="/about.png" class="about" @click="downloadFiles">
   </div>
 </template>
 

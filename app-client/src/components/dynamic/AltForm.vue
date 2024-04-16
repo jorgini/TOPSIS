@@ -1,5 +1,6 @@
 <script setup>
-  const alt = defineModel();
+  const alt = defineModel('alt');
+  const role = defineModel('role');
 </script>
 
 <script>
@@ -13,9 +14,12 @@
     },
     methods: {
       validate() {
-        this.isValidTitle = this.modelValue.title.length > 0 && this.modelValue.title.length < 101;
+        console.log(this.role);
+        this.isValidTitle = this.alt.title.length > 0 && this.alt.title.length < 101;
       },
       deleteAlt() {
+        if (this.role === 'expert')
+          return
         this.$emit('delete-alt', null);
       },
       switchDisc() {
@@ -32,7 +36,7 @@
         <p>Название:</p>
       </div>
       <div class="col-6">
-        <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title"
+        <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title" :readonly="role==='expert'"
                placeholder="title" maxlength="100" v-model="alt.title" @input="validate" required/>
       </div>
       <div class="col-3 right-col">
@@ -46,7 +50,7 @@
       </div>
       <div class="col-6">
         <textarea type="text" :class="{field: true, invisible: !isVisitableDisc}" name="description"
-            placeholder="description" maxlength="1000" v-model="alt.description"/>
+                  :readonly="role==='expert'" placeholder="description" maxlength="1000" v-model="alt.description"/>
       </div>
       <div class="col-3"></div>
     </div>

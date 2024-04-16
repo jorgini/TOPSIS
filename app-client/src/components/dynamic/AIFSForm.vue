@@ -24,7 +24,7 @@ export default {
       }
     },
     normalize(i) {
-      for (let k = i + 1; k < this.modelValue.length; ++k) {
+      for (let k = i + 1; k < this.modelValue.vert.length; ++k) {
         if (this.modelValue.vert[i] > this.modelValue.vert[k]) {
           this.modelValue.vert[k] = this.modelValue.vert[i];
           this.isValidVert[k] = true;
@@ -33,6 +33,7 @@ export default {
     },
     validateVert(i) {
       this.isValidVert[i] = this.modelValue.vert[i] >= 0 && this.modelValue.vert[i] < 2_147_483_648;
+      this.isValidVert[i] &= this.modelValue.vert[i] !== '';
       for (let k = 0; k < i; ++k) {
         this.isValidVert[i] &= (this.modelValue.vert[k] <= this.modelValue.vert[i]);
       }
@@ -48,6 +49,7 @@ export default {
     },
     validatePi() {
       this.isValidPi = this.modelValue.pi >= 0 && this.modelValue.pi <= 1;
+      this.isValidPi &= this.modelValue.pi !== '';
       if (this.isValidVert[0] && this.isValidVert[1] && this.isValidVert[2] && this.isValidVert[3] && this.isValidPi) {
         this.$emit('corr-rate');
       } else {
@@ -61,6 +63,10 @@ export default {
     } else {
       this.selectedFig = 'Трапеция';
     }
+
+    for (let k = 0; k < this.modelValue.vert.length; k++)
+      this.validateVert(k);
+    this.validatePi();
   }
 }
 </script>

@@ -115,12 +115,8 @@
         }
 
         if (this.$store.getters['errorOccurred']) {
-          if (this.$store.getters['errorOccurred'] === "doesn't complete") {
-            // todo show warning
-          } else {
-            console.log(this.$store.getters['errorOccurred']);
-            this.$emit('show-component', 'ErrorPage')
-          }
+          console.log(this.$store.getters['errorOccurred']);
+          this.$emit('show-component', 'ErrorPage');
           return
         }
         this.final = this.$store.getters['getFinal'];
@@ -183,7 +179,7 @@
     <dialog id="experts">
       <div class="exp" v-for="(_, i) in experts">
         <p>{{ experts[i].login }}</p>
-        <p>{{ experts[i].status }}</p>
+        <p>{{ experts[i].status === true ? 'Завершено' : 'Черновик' }}</p>
         <div v-if="role==='maintainer'" class="weight" @change="changeWeightType(i)">
           <select v-model="weightType[i]">
             <option>Число</option>

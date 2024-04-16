@@ -3,6 +3,7 @@ import config from '../../config.yaml'
 const state = {
     token: JSON.parse(localStorage.getItem('token')) || null,
     exp_at: JSON.parse(localStorage.getItem('exp_at')) || null,
+    userInfo: JSON.parse(localStorage.getItem('userInfo')) || null
 };
 
 const mutations = {
@@ -12,6 +13,9 @@ const mutations = {
             state.exp_at = Date.now() + (14 * 60 * 1000);
         else
             state.exp_at = Date.now() + (30 * 1000);
+    },
+    setUser(state, user) {
+        state.userInfo = user
     }
 };
 
@@ -74,8 +78,9 @@ const actions = {
                 });
         },
     logout({ commit }) {
-            commit('setToken', null);
-        },
+        commit('setToken', null);
+        commit('setUser', null);
+    },
     refreshToken({ commit }) {
             let status, headers;
             fetch(config.backend.url + "/auth/refresh", {
@@ -104,7 +109,98 @@ const actions = {
                     commit('setError', error, {root: true});
                     console.error('Ошибка:', error);
                 });
-        }
+        },
+    async reqUserInfo({ commit, getters }) {
+        let status;
+        const token = getters['getToken'];
+        await fetch(config.backend.url + '/user/settings', {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-type': 'application/json'
+            }
+        })
+            .then(response => {
+                status = response.status
+                return response.json()
+            })
+            .then(data => {
+                console.log(data);
+                if (status !== 200) {
+                    commit('setError', data.message, {root: true});
+                    commit('setStatus', status, {root: true});
+                } else {
+                    commit('setError', null, {root: true});
+                    commit('setUser', {login: data.login, email: data.email, password: ""});
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                commit('setError', error, {root: true});
+                commit('setStatus', 500, {root: true});
+            });
+    },
+    async updateUser({ commit, getters }, user) {
+        let status;
+        const token = getters['getToken'];
+        await fetch(config.backend.url + '/user/settings', {
+            method: "PATCH",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify(user),
+        })
+            .then(response => {
+                status = response.status
+                return response.json()
+            })
+            .then(data => {
+                console.log(data);
+                if (status !== 200) {
+                    commit('setError', data.message, {root: true});
+                    commit('setStatus', status, {root: true});
+                } else {
+                    commit('setError', null, {root: true});
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                commit('setError', error, {root: true});
+                commit('setStatus', 500, {root: true});
+            });
+    },
+    async deleteUser({ commit, dispatch, getters }) {
+        let status;
+        const token = getters['getToken'];
+        await fetch(config.backend.url + '/user/settings', {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-type': 'application/json'
+            }
+        })
+            .then(response => {
+                status = response.status
+                return response.json()
+            })
+            .then(data => {
+                console.log(data);
+                if (status !== 200) {
+                    commit('setError', data.message, {root: true});
+                    commit('setStatus', status, {root: true});
+                } else {
+                    commit('setError', null, {root: true});
+                    commit('setUser', null);
+                    dispatch('logout');
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                commit('setError', error, {root: true});
+                commit('setStatus', 500, {root: true});
+            });
+    }
 };
 
 const getters = {
@@ -116,6 +212,9 @@ const getters = {
     },
     getExpiredAt: (state) => {
         return state.exp_at
+    },
+    getUser: (state) => {
+        return state.userInfo
     }
 };
 
