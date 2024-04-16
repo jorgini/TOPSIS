@@ -2,6 +2,9 @@ build:
 	docker compose build
 
 run:
+	docker compose up server client
+
+start:
 	docker compose up
 
 test:
