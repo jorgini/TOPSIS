@@ -134,17 +134,17 @@ func (u *UserDao) DeleteUser(ctx context.Context, uid int64) error {
 	return u.c.CloseConnection()
 }
 
-func (u *UserDao) GetUserByUID(ctx context.Context, uid int64) (string, error) {
-	query := fmt.Sprintf("SELECT login FROM %s WHERE uid=$1", u.cfg.UserTable)
+func (u *UserDao) GetUserByUID(ctx context.Context, uid int64) (*entity.UserModel, error) {
+	query := fmt.Sprintf("SELECT login, email FROM %s WHERE uid=$1", u.cfg.UserTable)
 
 	conn := u.c.GetConnection()
 	if conn == nil {
-		return "", errors.New("cant connect to db")
+		return nil, errors.New("cant connect to db")
 	}
 
-	var login string
-	if err := conn.GetContext(ctx, &login, query, uid); err != nil {
-		return "", err
+	var user entity.UserModel
+	if err := conn.GetContext(ctx, &user, query, uid); err != nil {
+		return nil, err
 	}
-	return login, nil
+	return &user, nil
 }

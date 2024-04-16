@@ -54,7 +54,7 @@ func (m *MatrixDao) DeleteDependencies(ctx context.Context, sid, mainUid int64) 
 }
 
 func (m *MatrixDao) NullifyMatrices(ctx context.Context, sid int64, alts, criteria int) error {
-	query := fmt.Sprintf("UPDATE %s SET matrix=$1 WHERE sid=$2", m.cfg.MatrixTable)
+	query := fmt.Sprintf("UPDATE %s SET matrix=$1, status=$2 WHERE sid=$3", m.cfg.MatrixTable)
 
 	conn := m.c.GetConnection()
 	if conn == nil {
@@ -62,7 +62,7 @@ func (m *MatrixDao) NullifyMatrices(ctx context.Context, sid int64, alts, criter
 	}
 
 	nullMatrix := matrix.NewMatrix(alts, criteria)
-	if _, err := conn.ExecContext(ctx, query, nullMatrix, sid); err != nil {
+	if _, err := conn.ExecContext(ctx, query, nullMatrix, entity.Draft, sid); err != nil {
 		return errors.Join(err, m.c.CloseConnection())
 	}
 	return m.c.CloseConnection()

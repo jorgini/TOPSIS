@@ -43,6 +43,7 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 		userGroup.Delete("/tasks", h.DeleteTask)
 		userGroup.Patch("/settings", h.UpdateUser)
 		userGroup.Delete("/settings", h.DeleteUser)
+		userGroup.Get("/settings", h.GetUser)
 	}
 
 	solGroup := api.Group("/solution")

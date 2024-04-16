@@ -8,7 +8,9 @@
       return {
         task: this.$store.getters['getTaskSettings'],
         default_calc: config.backend.default_calc,
-        alts: null
+        alts: [{title: "", description: ""}],
+        prevAltsLength: null,
+        role: null
       }
     },
     methods: {
@@ -18,6 +20,10 @@
       showTS() {
         this.$emit('show-component', 'TaskSet');
       },
+      showWarning() {
+        const modal = document.getElementById('warning');
+        modal.showModal();
+      },
       async showCriteria() {
         for (let i = 0; i < this.alts.length; i++) {
           if (!this.validateTitle(i)) {
@@ -26,13 +32,30 @@
           }
         }
 
-        const prevAlts = this.$store.getters['getAlts'];
-        if (prevAlts.length !== this.alts.length) {
-          // todo show warning about deactivate statuses
+        if (this.role === 'expert') {
+          this.$emit('show-component', 'Criteria');
+          return
         }
 
-        await this.$store.dispatch('updateAlts', {sid: this.task.sid, alts: this.alts})
-        this.$emit('show-component', 'Criteria')
+        if (this.prevAltsLength !== this.alts.length && this.prevAltsLength !== 0) {
+          this.showWarning();
+          return
+        }
+
+        await this.updateAlts();
+      },
+      async updateAlts() {
+        await this.$store.dispatch('updateAlts', {sid: this.task.sid, alts: this.alts});
+        if (this.$store.getters['errorOccurred']) {
+          console.log(this.$store.getters['errorOccurred']);
+          this.$emit('show-component', 'ErrorPage');
+        } else {
+          this.$emit('show-component', 'Criteria');
+        }
+      },
+      closeModal() {
+        const modal = document.getElementById('warning');
+        modal.close();
       },
       addAlt() {
         this.alts.push({title: "", description: ""});
@@ -57,8 +80,17 @@
 
       this.alts = this.$store.getters['getAlts'];
       if (this.alts === null || this.alts.length === 0) {
+        this.prevAltsLength = 0;
         this.alts = [];
         this.addAlt();
+      } else {
+        this.prevAltsLength = this.alts.length;
+      }
+
+      this.role = await this.$store.dispatch('getRole', this.task.sid);
+      if (this.$store.getters['errorOccurred']) {
+        console.log(this.$store.getters['errorOccurred']);
+        this.$emit('show-component', 'ErrorPage')
       }
     }
   }
@@ -87,12 +119,22 @@
     </div>
     <h1>Задайте альтерантивы</h1>
     <div id="alts" class="container-fluid">
-      <AltForm v-for="(_, i) in alts" v-model="alts[i]" @delete-alt="deleteAlt(i)"></AltForm>
+      <AltForm v-for="(_, i) in alts" v-model:alt="alts[i]" v-model:role="role" @delete-alt="deleteAlt(i)"></AltForm>
     </div>
     <div class="add-alts">
-      <button class="blk-btn" @click="addAlt">Добавить ещё</button>
+      <button class="blk-btn" :disabled="role==='expert'" @click="addAlt">Добавить ещё</button>
     </div>
   </div>
+
+  <dialog id="warning">
+    <h3>Предупреждение</h3>
+    <p>Вы хотите изменить количество альтернатив.</p>
+    <p>Если вы продолжите, то это приведет к обнулению оценок всех экспертов.</p>
+    <div class="btns">
+      <button class="blk-btn" @click="updateAlts">Подтвердить</button>
+      <button class="cl-btn" @click="closeModal">Отмена</button>
+    </div>
+  </dialog>
 
   <footer class="footer" style="flex-shrink: 0">
     <div style="display:flex; width:fit-content; height:100%; cursor: pointer" @click="showTS">
@@ -108,7 +150,5 @@
 
 <style scoped>
   @import "../style.css";
-  @import "../assets/personal.css";
   @import "../assets/alts.css";
-
 </style>

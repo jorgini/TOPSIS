@@ -7,13 +7,19 @@
     data() {
       return {
         task: {
+          sid: null,
           title: null,
           description: null,
           method: null,
           task_type: null,
           calc_settings: null,
         },
+        prevType: null,
+        isVisibleDescription: false,
         isValidTitle: true,
+        isValidPassword: true,
+        isPasswordInstalled: false,
+        password: "",
         defaultCalc: config.backend.default_calc,
         isDefaultCalc: true,
         isCalcVisible: false,
@@ -24,63 +30,90 @@
           isDefaultFsDist: true,
           isDefaultNumDist: true,
           isDefaultAggregate: true,
-        }
+        },
+        role: null
       }
     },
     methods: {
       showPP() {
         this.$emit('show-component', 'Personal');
       },
+      showMain() {
+        this.$emit('show-component', 'Main');
+      },
+      showPassDialog() {
+        const modal = document.getElementById('info');
+        modal.showModal();
+      },
       async showAlts() {
         if (!this.isValidTitle) {
           return;
         }
 
-        const prevSet = this.$store.getters['getTaskSettings'];
-        if (prevSet.task_type === 'individual' && this.task.task_type === 'group') {
-          // todo show password and identifier
+        if (this.role === 'expert') {
+          this.$emit('show-component', 'Alts');
+          return
         }
 
-        if (prevSet.task_type === 'group' && this.task.task_type === 'individuals') {
-          // todo show warning about delete experts
+        if (this.prevType === 'individual' && this.task.task_type === 'group' && !this.isPasswordInstalled) {
+          this.showPassDialog();
+          return;
         }
 
+        if (this.prevType === 'group' && this.task.task_type === 'individual') {
+          const modal = document.getElementById('warning');
+          modal.showModal();
+          return
+        }
+
+        await this.updateTask();
+      },
+      async updateTask() {
         await this.$store.dispatch('updateTask', this.task);
         if (this.$store.getters['errorOccurred']) {
           console.log(this.$store.getters['errorOccurred']);
-          this.$emit('show-component', 'ErrorPage')
+          this.$emit('show-component', 'ErrorPage');
         } else {
           console.log(this.task.calc_settings);
           this.$emit('show-component', 'Alts');
         }
       },
-      showMain() {
-        this.$emit('show-component', 'Main');
+      async submitPass() {
+        this.validatePassword()
+        if (!this.isValidPassword) {
+          // todo show warning
+          return
+        }
+
+        await this.$store.dispatch('setPass', {sid: this.task.sid, password: this.password});
+        if (this.$store.getters['errorOccurred']) {
+          this.$emit('show-component', 'ErrorPage');
+          return
+        }
+        this.closeModal()
+        this.isPasswordInstalled = true;
+      },
+      closeModal() {
+        const modal = document.getElementById('info');
+        modal.close();
+        const modal2 = document.getElementById('warning');
+        modal2.close();
       },
       validateTitle() {
-        this.isValidTitle = this.title.length > 0 && this.title.length < 101;
+        this.isValidTitle = this.task.title.length > 0 && this.task.title.length < 101;
       },
-      switchDescription(event) {
-        if (event.target.className.split(' ')[1] === 'close') {
-          event.target.className = "flag open";
-          document.getElementsByName('description').item(0).className = 'field visible';
-        }
-        else {
-          event.target.className = "flag close";
-          document.getElementsByName('description').item(0).className = 'field invisible'
-        }
+      validatePassword() {
+        this.isValidPassword = this.password.length >= 4 && this.password.length < 101;
       },
-      switchViewCalc(event) {
-        if (event.target.className.split(' ')[1] === 'close') {
-          event.target.className = "flag open";
-          this.isCalcVisible = true;
-        }
-        else {
-          event.target.className = "flag close";
-          this.isCalcVisible = false;
-        }
+      switchDescription() {
+        this.isVisibleDescription = !this.isVisibleDescription;
+      },
+      switchViewCalc() {
+        this.isCalcVisible = !this.isCalcVisible;
       },
       chooseMethod(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'SMART') {
           this.task.method = 'smart';
         } else {
@@ -88,6 +121,8 @@
         }
       },
       chooseType(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'Индивидуальная') {
           this.task.task_type = 'individual';
         } else {
@@ -95,6 +130,8 @@
         }
       },
       chooseCalc(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'По умолчанию') {
           this.task.calc_settings = this.defaultCalc;
           this.isDefaultCalc = true;
@@ -109,84 +146,117 @@
         }
       },
       chooseNormValue(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'По сумме') {
           this.calc.isDefaultNormValue = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111));
+          this.task.calc_settings |= config.calc.normalizeWithSum;
         } else {
           this.calc.isDefaultNormValue = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111));
-          this.task.calc_settings |= 0b0010;
+          this.task.calc_settings |= config.calc.normalizeValueWithMax;
           this.isDefaultCalc = false;
         }
       },
       chooseNormWeight(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'По сумме') {
           this.calc.isDefaultNormWeight = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 4));
+          this.task.calc_settings |= (config.calc.normalizeWithSum << 4);
         } else {
           this.calc.isDefaultNormWeight = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 4));
-          this.task.calc_settings |= (0b0001 << 4);
+          this.task.calc_settings |= (config.calc.normalizeWeightsByMidPoint << 4);
           this.isDefaultCalc = false;
         }
       },
       chooseRanking(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'По умолчанию') {
           this.calc.isDefaultRanking = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 8));
-          this.task.calc_settings |= (0b1010 << 8);
+          this.task.calc_settings |= (config.calc.default << 8);
 
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 16));
-          this.task.calc_settings |= (0b1010 << 16);
+          this.task.calc_settings |= (config.calc.default << 16);
         } else {
           this.calc.isDefaultRanking = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 8));
-          this.task.calc_settings |= (0b0011 << 8);
+          this.task.calc_settings |= (config.calc.sengupta << 8);
           this.isDefaultCalc = false;
 
+          this.calc.isDefaultFsDist = false;
+          this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 12));
+          this.task.calc_settings |= (config.calc.alphaSlices << 12);
+
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 16));
-          this.task.calc_settings |= (0b0011 << 16);
+          this.task.calc_settings |= (config.calc.sengupta << 16);
         }
       },
       chooseFsDist(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'По умолчанию') {
           this.calc.isDefaultFsDist = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 12));
-          this.task.calc_settings |= (0b1010 << 12);
+          this.task.calc_settings |= (config.calc.default << 12);
+
+          this.calc.isDefaultRanking = true;
+          this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 8));
+          this.task.calc_settings |= (config.calc.default << 8);
         } else {
           this.calc.isDefaultFsDist = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 12));
-          this.task.calc_settings |= (0b0100 << 12);
+          this.task.calc_settings |= (config.calc.alphaSlices << 12);
           this.isDefaultCalc = false;
         }
       },
       chooseNumDist(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'Квадратичная метрика') {
           this.calc.isDefaultNumDist = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 20));
-          this.task.calc_settings |= (0b0101 << 20);
+          this.task.calc_settings |= (config.calc.sqrtDistance << 20);
         } else {
           this.calc.isDefaultNumDist = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 20));
-          this.task.calc_settings |= (0b0110 << 20);
+          this.task.calc_settings |= (config.calc.cbrtDistance << 20);
           this.isDefaultCalc = false;
         }
       },
       chooseAggregate(event) {
+        if (this.role === 'expert')
+          return
         if (event.target.textContent.trim() === 'Агрегация матриц') {
           this.calc.isDefaultAggregate = true;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 24));
-          this.task.calc_settings |= (0b0111 << 24);
+          this.task.calc_settings |= (config.calc.aggregateMatrix << 24);
         } else {
           this.calc.isDefaultAggregate = false;
           this.task.calc_settings = this.task.calc_settings & (~(0b1111 << 24));
-          this.task.calc_settings |= (0b1000 << 24);
+          this.task.calc_settings |= (config.calc.aggregateFinals << 24);
           this.isDefaultCalc = false;
         }
       }
     },
-    mounted() {
+    async mounted() {
       this.task =  this.$store.getters['getTaskSettings'];
+      this.prevType = this.task.task_type;
+      if (this.prevType === 'group') {
+        this.isPasswordInstalled = true;
+      }
+
+      this.role = await this.$store.dispatch('getRole', this.task.sid);
+      if (this.$store.getters['errorOccurred']) {
+        console.log(this.$store.getters['errorOccurred']);
+        this.$emit('show-component', 'ErrorPage');
+      }
+
       if (this.task.calc_settings !== this.defaultCalc) {
         this.isDefaultCalc = false;
         this.calc.isDefaultNormValue = (((this.task.calc_settings & 0b1111)) === 0b0000);
@@ -214,7 +284,7 @@
           <p>Название:</p>
         </div>
         <div class="col-8">
-          <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title"
+          <input type="text" :class="{field: true, invalid: !isValidTitle}" name="title" :readonly="role==='expert'"
                  placeholder="title" maxlength="100" v-model="task.title" @input="validateTitle" required/>
         </div>
       </div>
@@ -225,8 +295,8 @@
           <p>Описание:</p>
         </div>
         <div class="col-8">
-          <textarea type="text" class="field invisible" name="description" placeholder="description"
-                    maxlength="1000" v-model="task.description"/>
+          <textarea v-if="isVisibleDescription" type="text" class="field" name="description" placeholder="description"
+                    maxlength="1000" v-model="task.description" :readonly="role==='expert'"/>
         </div>
       </div>
 
@@ -236,10 +306,10 @@
         </div>
         <div class="col-8">
           <div class="select">
-            <button type="button"
+            <button type="button" :disabled="role==='expert'"
                     :class="{opt: true, non_active: task.method !== 'smart', is_active: task.method === 'smart'}"
                     @click="chooseMethod">SMART</button>
-            <button type="button"
+            <button type="button" :disabled="role==='expert'"
                     :class="{opt:true, non_active:task.method !== 'topsis', is_active: task.method === 'topsis'}"
                     @click="chooseMethod">TOPSIS</button>
           </div>
@@ -252,30 +322,33 @@
         </div>
         <div class="col-8">
           <div class="select">
-            <button type="button"
+            <button type="button" :disabled="role==='expert'"
                     :class="{opt: true, non_active: task.task_type !== 'individual', is_active: task.task_type === 'individual'}"
                     @click="chooseType">Индивидуальная
             </button>
-            <button type="button"
+            <button type="button" :disabled="role==='expert'"
                     :class="{opt: true, non_active: task.task_type !== 'group', is_active: task.task_type === 'group'}"
                     @click="chooseType">Групповая
             </button>
           </div>
+          <img v-if="prevType==='group' && task.task_type==='group' && role==='maintainer'" alt="" src="/about.png"
+               class="about" @click="showPassDialog">
         </div>
       </div>
 
       <div class="calc row-cols-2">
         <div class="col-4">
-          <img alt="flag" class="flag close" src="/arrow.png" @click="switchViewCalc"/>
+          <img alt="flag" :class="{flag: true, close: !isCalcVisible, open: isVisibleDescription}" src="/arrow.png"
+               @click="switchViewCalc"/>
           <p>Настройка вычислений:</p>
         </div>
         <div class="col-8">
           <div class="select">
             <button type="button" :class="{opt:true, non_active: !isDefaultCalc, is_active: isDefaultCalc}"
-                    @click="chooseCalc">По умолчанию
+                    @click="chooseCalc" :disabled="role==='expert'">По умолчанию
             </button>
             <button type="button" :class="{opt: true, non_active: isDefaultCalc, is_active: !isDefaultCalc}"
-                    @click="chooseCalc">Своя конфигурация
+                    @click="chooseCalc" :disabled="role==='expert'">Своя конфигурация
             </button>
           </div>
         </div>
@@ -288,11 +361,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultNormValue, is_active: calc.isDefaultNormValue}"
                       @click="chooseNormValue">По сумме
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultNormValue, is_active: !calc.isDefaultNormValue}"
                       @click="chooseNormValue">По максимуму
               </button>
@@ -306,11 +379,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultNormWeight, is_active: calc.isDefaultNormWeight}"
                       @click="chooseNormWeight">По сумме
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultNormWeight, is_active: !calc.isDefaultNormWeight}"
                       @click="chooseNormWeight">По средней точке
               </button>
@@ -324,11 +397,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultRanking, is_active: calc.isDefaultRanking}"
                       @click="chooseRanking">По умолчанию
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultRanking, is_active: !calc.isDefaultRanking}"
                       @click="chooseRanking">Сенгупта
               </button>
@@ -342,11 +415,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultFsDist, is_active: calc.isDefaultFsDist}"
                       @click="chooseFsDist">По умолчанию
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultFsDist, is_active: !calc.isDefaultFsDist}"
                       @click="chooseFsDist">Альфа-срезы
               </button>
@@ -360,11 +433,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultNumDist, is_active: calc.isDefaultNumDist}"
                       @click="chooseNumDist">Квадратичная метрика
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultNumDist, is_active: !calc.isDefaultNumDist}"
                       @click="chooseNumDist">Кубическая метрика
               </button>
@@ -378,11 +451,11 @@
           </div>
           <div class="col-8">
             <div class="select">
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: !calc.isDefaultAggregate, is_active: calc.isDefaultAggregate}"
                       @click="chooseAggregate">Агрегация матриц
               </button>
-              <button type="button"
+              <button type="button" :disabled="role==='expert'"
                       :class="{opt: true, non_active: calc.isDefaultAggregate, is_active: !calc.isDefaultAggregate}"
                       @click="chooseAggregate">Агрегация результатов
               </button>
@@ -390,9 +463,31 @@
           </div>
         </div>
       </div>
-
 <!--      <LingScale></LingScale>-->
     </form>
+
+    <dialog id="info">
+      <h3>Найстройки групповой задачи</h3>
+      <p>Идентификатор данной задачи для подключения: {{ task.sid }}</p>
+      <p>{{ prevType==='group' ? 'Можете поменять пароль, если вы забыли его (это не повлияет на уже подключенных экспертов):' :
+        'Установите пароль от данной задачи:' }}</p>
+      <input type="text" name="password" :class="{field: true, invalid: !isValidPassword}" placeholder="password"
+             v-model="password" @input="validatePassword" required/>
+      <div class="btns">
+        <button class="blk-btn" @click="submitPass">Подтвердить</button>
+        <button class="cl-btn" @click="closeModal">Отмена</button>
+      </div>
+    </dialog>
+
+    <dialog id="warning">
+      <h3>Предупреждение</h3>
+      <p>Вы хотите поменять тип задачи с групповой на индивидуальную.</p>
+      <p>Если вы продолжите, то пользователи, которые уже подсоединились к задаче автоматически отстранятся от неё.</p>
+      <div class="btns">
+        <button class="blk-btn" @click="updateTask">Подтвердить</button>
+        <button class="cl-btn" @click="closeModal">Отмена</button>
+      </div>
+    </dialog>
   </div>
 
   <footer class="footer" style="flex-shrink: 0">

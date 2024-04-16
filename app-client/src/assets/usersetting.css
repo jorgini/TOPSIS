@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
+
+h1 {
+    width: fit-content;
+    margin: 6vmin auto;
+}
+
+.header h3 {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 3vmin;
+}
+
+.setting {
+    display: block;
+    text-align: left;
+    width: 60%;
+    margin: 4vmin auto;
+}
+
+.setting > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 2vmin auto;
+    height: fit-content;
+}
+
+.setting p {
+    font-family: "Inria Sans", sans-serif;
+    font-weight: 700;
+    font-size: 2.5vmin;
+    margin: auto;
+}
+
+.field {
+    height: 6vmin;
+    width: 50%;
+}
+
+.del {
+    border: 2px solid red;
+    box-shadow: 0 0 4px 4px #E99A9A;
+}
+
+.del:hover {
+    box-shadow: 0 0 6px 6px #E99A9A;
+}
+
+.left-arrow {
+    margin: 1.5vmin 1vmin auto 1.5vmin;
+    align-items: start;
+    mix-blend-mode: multiply;
+    border: 0;
+    padding: 0;
+    width: 15px;
+    height: auto;
+    rotate: 90deg;
+}
+
+.footer p {
+    font-family: "Inria Sans", sans-serif;
+    font-size: 2.5vmin;
+    font-weight: 700;
+    margin-top: 1vmin;
+}

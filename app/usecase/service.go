@@ -16,6 +16,7 @@ type User interface {
 	UpdateUser(ctx context.Context, uid int64, update *entity.UserModel) error
 	DeleteUser(ctx context.Context, uid int64) error
 	GetUsersRelateToTask(ctx context.Context, sid int64) ([]entity.Expert, error)
+	GetUserInfo(ctx context.Context, uid int64) (*entity.UserModel, error)
 }
 
 type Session interface {

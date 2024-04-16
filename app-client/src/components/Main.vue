@@ -23,6 +23,9 @@
           link.click();
         } catch (error) {
           console.error('Ошибка при скачивании файла:', error);
+          this.$store.commit('setError', error);
+          this.$store.commit('setStatus', 500);
+          this.$emit('show-component', 'ErrorPage');
         }
       },
       async downloadInputInfo() {
@@ -39,6 +42,9 @@
           link.click();
         } catch (error) {
           console.error('Ошибка при скачивании файла:', error);
+          this.$store.commit('setError', error);
+          this.$store.commit('setStatus', 500);
+          this.$emit('show-component', 'ErrorPage');
         }
       },
     },

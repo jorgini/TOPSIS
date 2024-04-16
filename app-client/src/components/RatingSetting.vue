@@ -82,20 +82,27 @@ export default {
     }
   },
   async mounted() {
-    await this.$store.dispatch('showAlts', this.task.sid);
-    await this.$store.dispatch('showCriteria', this.task.sid);
-
-    this.criteria = this.$store.getters['getCriteria'];
-    this.alts = this.$store.getters['getAlts'];
-    this.ord = this.$store.getters['getOrd'];
-    this.curAlt = this.alts[this.ord].title;
-
     await this.$store.dispatch('takeMatrix', {sid: this.task.sid, ord: this.ord});
     if (this.$store.getters['errorOccurred']) {
       console.log(this.$store.getters['errorOccurred']);
       this.$emit('show-component', 'ErrorPage')
       return
     }
+
+
+    await this.$store.dispatch('showAlts', this.task.sid);
+    await this.$store.dispatch('showCriteria', this.task.sid);
+    if (this.$store.getters['errorOccurred']) {
+      console.log(this.$store.getters['errorOccurred']);
+      this.$emit('show-component', 'ErrorPage')
+      return
+    }
+
+    this.criteria = this.$store.getters['getCriteria'];
+    this.alts = this.$store.getters['getAlts'];
+    this.ord = this.$store.getters['getOrd'];
+
+    this.curAlt = this.alts[this.ord].title;
 
     this.matrix = this.$store.getters['getRatings'];
     this.isValid = new Array(this.matrix.length).fill(true);

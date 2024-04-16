@@ -1,3 +1,15 @@
 backend:
   url: "http://localhost:3030"
   default_calc: 123382272
+
+calc:
+  default: 0b1010
+  normalizeWithSum : 0b0000
+  normalizeWeightsByMidPoint : 0b0001
+  normalizeValueWithMax      : 0b0010
+  sengupta                   : 0b0011
+  alphaSlices                : 0b0100
+  sqrtDistance               : 0b0101
+  cbrtDistance               : 0b0110
+  aggregateMatrix            : 0b0111
+  aggregateFinals            : 0b1000

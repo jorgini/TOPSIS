@@ -222,7 +222,7 @@ func (t *TaskDao) UpdateAlts(ctx context.Context, sid int64, alts entity.Alts) e
 }
 
 func (t *TaskDao) GetAllSolutions(ctx context.Context, uid int64) ([]entity.TaskModel, error) {
-	query := fmt.Sprintf("SELECT t.* FROM %s t LEFT JOIN %s m ON t.sid=m.sid WHERE m.uid=$1 OR maintainer=$1",
+	query := fmt.Sprintf("SELECT DISTINCT ON (t.sid) t.* FROM %s t LEFT JOIN %s m ON t.sid=m.sid WHERE m.uid=$1 OR maintainer=$1",
 		t.cfg.TaskTable, t.cfg.MatrixTable)
 
 	conn := t.c.GetConnection()

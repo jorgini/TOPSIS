@@ -16,7 +16,7 @@ type User interface {
 	GetUID(ctx context.Context, user *entity.UserModel) (int64, error)
 	UpdateUser(ctx context.Context, uid int64, update *entity.UserModel) error
 	DeleteUser(ctx context.Context, uid int64) error
-	GetUserByUID(ctx context.Context, uid int64) (string, error)
+	GetUserByUID(ctx context.Context, uid int64) (*entity.UserModel, error)
 }
 
 type Session interface {

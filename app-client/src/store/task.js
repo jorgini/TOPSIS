@@ -96,6 +96,36 @@ const actions = {
                 commit('setStatus', 500, {root: true});
             });
     },
+    async setPass({commit, getters}, {sid, password}){
+      let status;
+      const token = getters['getToken'];
+      await fetch(config.backend.url + "/solution/settings/pass?sid=" + sid, {
+          method: 'PATCH',
+          headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-type': 'application/json'
+          },
+          body: JSON.stringify({password: password})
+      })
+          .then(response => {
+              status = response.status;
+              return response.json();
+          })
+          .then(data => {
+              console.log(data);
+              if (status !== 200) {
+                  commit('setError', data.message, {root: true});
+                  commit('setStatus', status, {root: true});
+              } else {
+                  commit('setError', null, {root: true});
+              }
+          })
+          .catch(error => {
+              console.log(error);
+              commit('setError', error, {root: true});
+              commit('setStatus', 500, {root: true});
+          });
+    },
     async showAlts({ commit, getters }, sid) {
         let status;
         const token = getters['getToken'];
