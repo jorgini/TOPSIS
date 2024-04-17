@@ -10,16 +10,27 @@ services:
       - "5432:5432"
     volumes:
       - ./.database/postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
   server:
+    build:
+      context: ./app
     image: app:latest
     command: air
     ports:
       - "3030:3030"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
-      - .:/code
+      - ./app:/app
   client:
+    build:
+      context: ./app-client
     image: app-client:latest
     command: npm run dev
     ports:
@@ -27,4 +38,5 @@ services:
     depends_on:
       - server
     volumes:
-      - .:/code
+      - ./app-client:/app
+      - /app/node_modules

@@ -4,6 +4,7 @@ LABEL authors="jorka"
 WORKDIR /usr/src/app-client
 
 COPY ./package.json ./
+COPY ./vite.config.js ./
 
 RUN node -v
 
