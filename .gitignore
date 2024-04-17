@@ -2,10 +2,9 @@
 
 .database
 
-app/cmd/.env
-
 app-client/node_modules
 dist
+tmp
 dist-ssr
 *.local
 
