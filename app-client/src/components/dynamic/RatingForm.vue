@@ -4,19 +4,22 @@ import IntervalForm from "./IntervalForm.vue";
 import T1FSForm from "./T1FSForm.vue";
 import AIFSForm from "./AIFSForm.vue";
 import IT2FSForm from "./IT2FSForm.vue";
+import LingForm from "./LingForm.vue";
 export default {
   emits:['corr-rate', 'incorr-rate', 'update-rate'],
   props: {
     rating: Object,
-    criterion: Object
+    criterion: Object,
+    scale: Object,
   },
-  components: {NumberForm, IntervalForm, T1FSForm, AIFSForm, IT2FSForm},
+  components: {NumberForm, IntervalForm, T1FSForm, AIFSForm, IT2FSForm, LingForm},
   data() {
     return {
       isValid: true,
       selectedType: 'Число',
       curType: 'Число',
-      localCopy: this.rating.rate
+      localCopy: this.rating.rate,
+      scaleCopy: this.scale
     }
   },
   watch: {
@@ -39,6 +42,10 @@ export default {
         this.localCopy = {vert: [0.0, 0.0, 0.0], pi: 0.0};
       } else if (this.selectedType === 'IT2FS') {
         this.localCopy = {bottom: [{start: 0.0, end: 0.0}, {start: 0.0, end: 0.0}], upward: [0.0]};
+      } else if (this.selectedType === 'Линг.оценка') {
+        if (this.scale === undefined || this.scale === null)
+          return
+        this.localCopy = {mark: this.scaleCopy.marks[0], eval: this.scaleCopy.ratings[0]};
       }
       this.curType = this.selectedType;
     },
@@ -54,8 +61,10 @@ export default {
       this.selectedType = 'T1FS';
     } else if ('start' in this.localCopy) {
       this.selectedType = 'Интервал';
+    } else if ('mark' in this.localCopy) {
+      this.selectedType = 'Линг.оценка';
     } else {
-      console.log("warning:", this.localCopy)
+      console.log("warning:", this.localCopy);
     }
     this.curType = this.selectedType;
   }
@@ -76,6 +85,7 @@ export default {
           <option>T1FS</option>
           <option>AIFS</option>
           <option>IT2FS</option>
+          <option v-if="this.scale !== undefined && this.scale !== null">Линг.оценка</option>
         </select>
       </div>
       <div class="col-7">
@@ -89,7 +99,8 @@ export default {
                   @incorr-rate="this.$emit('incorr-rate')"></AIFSForm>
         <IT2FSForm v-if="curType==='IT2FS'" v-model="localCopy" @corr-rate="this.$emit('corr-rate')"
                    @incorr-rate="this.$emit('incorr-rate')"></IT2FSForm>
-        <!--todo linguistic rate-->
+        <LingForm v-if="curType==='Линг.оценка'" v-model="localCopy" @corr-rate="this.$emit('corr-rate')"
+                  @incorr-rate="this.$emit('incorr-rate')" v-model:scale="scaleCopy"></LingForm>
       </div>
     </div>
   </div>

@@ -27,14 +27,13 @@ export default {
         this.$emit('show-component', 'Criteria');
       } else {
         this.ord--;
-        this.$store.dispatch('changeOrd', this.ord);
+        await this.$store.dispatch('changeOrd', this.ord);
         await this.$store.dispatch('takeMatrix', {sid: this.task.sid, ord: this.ord});
         if (this.$store.getters['errorOccurred']) {
           console.log(this.$store.getters['errorOccurred']);
           this.$emit('show-component', 'ErrorPage')
           return
         }
-        this.matrix = this.$store.getters['getRatings'];
         location.reload();
       }
     },
@@ -63,14 +62,13 @@ export default {
         this.$emit('show-component', 'Final');
       } else {
         this.ord++;
-        this.$store.dispatch('changeOrd', this.ord);
+        await this.$store.dispatch('changeOrd', this.ord);
         await this.$store.dispatch('takeMatrix', {sid: this.task.sid, ord: this.ord});
         if (this.$store.getters['errorOccurred']) {
           console.log(this.$store.getters['errorOccurred']);
           this.$emit('show-component', 'ErrorPage')
           return
         }
-        this.matrix = this.$store.getters['getRatings'];
         location.reload();
       }
     },
@@ -82,6 +80,8 @@ export default {
     }
   },
   async mounted() {
+    this.ord = this.$store.getters['getOrd'];
+
     await this.$store.dispatch('takeMatrix', {sid: this.task.sid, ord: this.ord});
     if (this.$store.getters['errorOccurred']) {
       console.log(this.$store.getters['errorOccurred']);
@@ -89,9 +89,9 @@ export default {
       return
     }
 
-
     await this.$store.dispatch('showAlts', this.task.sid);
     await this.$store.dispatch('showCriteria', this.task.sid);
+
     if (this.$store.getters['errorOccurred']) {
       console.log(this.$store.getters['errorOccurred']);
       this.$emit('show-component', 'ErrorPage')
@@ -100,8 +100,6 @@ export default {
 
     this.criteria = this.$store.getters['getCriteria'];
     this.alts = this.$store.getters['getAlts'];
-    this.ord = this.$store.getters['getOrd'];
-
     this.curAlt = this.alts[this.ord].title;
 
     this.matrix = this.$store.getters['getRatings'];
@@ -131,9 +129,27 @@ export default {
         <p>{{ (task.task_type === 'individual') ? "Индивидуальная" : "Групповая" }}</p>
       </div>
     </div>
+
+    <div class="short-card container-fluid row-cols-2" style="min-height: 10vmin">
+      <div class="col-3" style="display: flex; align-items: center; justify-content: right">
+        <p>Лингвистическая шкала:</p>
+      </div>
+      <div class="col-9" style="display: flex; align-items: center; justify-content: center">
+        <table class="table table-bordered">
+          <tbody>
+            <tr>
+              <td v-for="(_, i) in task.ling_scale.marks">
+                <p>{{ task.ling_scale.marks[i] }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <h1>Альтернатива: {{ curAlt }}</h1>
     <div id="ratings" class="container-fluid">
-      <RatingForm v-for="(_, i) in matrix" :rating="{rate: matrix[i]}" :criterion="criteria[i]"
+      <RatingForm v-for="(_, i) in matrix" :rating="{rate: matrix[i]}" :criterion="criteria[i]" :scale="this.task.ling_scale"
           @corr-rate="validateRate(i, true)" @incorr-rate="validateRate(i, false)"
           @update-rate="updateRate($event, i)"></RatingForm>
     </div>

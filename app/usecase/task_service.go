@@ -202,3 +202,7 @@ func (t *TaskService) SetExpertsWeights(ctx context.Context, sid int64, weights 
 
 	return t.repo.SetExpertsWeights(ctx, sid, weights)
 }
+
+func (t *TaskService) Complete(ctx context.Context, sid int64) error {
+	return t.repo.Complete(ctx, sid)
+}

@@ -1,6 +1,7 @@
 <script setup>
   const alt = defineModel('alt');
   const role = defineModel('role');
+  const emits = defineEmits(["delete-alt"]);
 </script>
 
 <script>

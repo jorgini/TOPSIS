@@ -1,6 +1,7 @@
 <script setup>
   const number = defineModel();
   const role = defineModel('role');
+  const emits = defineEmits(["corr-rate", "incorr-rate"])
 </script>
 
 <script>

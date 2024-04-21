@@ -2,22 +2,16 @@
   import config from '../../config.yaml';
   import LingScale from "./dynamic/LingScale.vue";
   export default {
-    component: { LingScale },
+    components: {LingScale},
     emits: ['show-component'],
     data() {
       return {
-        task: {
-          sid: null,
-          title: null,
-          description: null,
-          method: null,
-          task_type: null,
-          calc_settings: null,
-        },
+        task: this.$store.getters['getTaskSettings'],
         prevType: null,
         isVisibleDescription: false,
         isValidTitle: true,
         isValidPassword: true,
+        isValidScale: true,
         isPasswordInstalled: false,
         password: "",
         defaultCalc: config.backend.default_calc,
@@ -46,7 +40,7 @@
         modal.showModal();
       },
       async showAlts() {
-        if (!this.isValidTitle) {
+        if (!this.isValidTitle || !this.isValidScale) {
           return;
         }
 
@@ -104,6 +98,9 @@
       },
       validatePassword() {
         this.isValidPassword = this.password.length >= 4 && this.password.length < 101;
+      },
+      validateScale(fact) {
+        this.isValidScale = fact;
       },
       switchDescription() {
         this.isVisibleDescription = !this.isVisibleDescription;
@@ -245,7 +242,6 @@
       }
     },
     async mounted() {
-      this.task =  this.$store.getters['getTaskSettings'];
       this.prevType = this.task.task_type;
       if (this.prevType === 'group') {
         this.isPasswordInstalled = true;
@@ -463,7 +459,8 @@
           </div>
         </div>
       </div>
-<!--      <LingScale></LingScale>-->
+      <LingScale v-model="task.ling_scale" v-model:role="role" @corr-scale="validateScale(true)"
+                 @incorr-scale="validateScale(false)"></LingScale>
     </form>
 
     <dialog id="info">

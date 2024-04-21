@@ -42,6 +42,7 @@ type Task interface {
 	ConnectToTask(ctx context.Context, sid int64, password string) error
 	SetLastChange(ctx context.Context, sid int64) error
 	SetExpertsWeights(ctx context.Context, sid int64, weights entity.Weights) error
+	Complete(ctx context.Context, sid int64) error
 }
 
 type Matrix interface {

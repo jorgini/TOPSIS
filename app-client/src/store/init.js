@@ -5,6 +5,7 @@ import page from "./page.js";
 import taskList from "./taskslist.js";
 import error from "./error.js";
 import task from "./task.js";
+import defaults from "./defaults.js";
 
 const store = new Vuex.Store({
     modules: {
@@ -12,7 +13,8 @@ const store = new Vuex.Store({
         page,
         task,
         error,
-        taskList
+        taskList,
+        defaults
     },
     plugins: [createPersistedState()],
 });
@@ -22,7 +24,9 @@ if (!store.getters['isAuthenticated'] && store.getters['getPage'] !== 'Auth') {
 }
 
 if (store.getters['isAuthenticated']) {
-    store.dispatch('takeTasks');
+    await store.dispatch('takeTasks');
 }
+
+await store.dispatch('takeDefaultLingScale');
 
 export default store;

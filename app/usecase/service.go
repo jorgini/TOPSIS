@@ -41,6 +41,7 @@ type Task interface {
 	GetAllSolutions(ctx context.Context, uid int64) ([]entity.TaskShortCard, error)
 	ConnectToTask(ctx context.Context, sid int64, password string) error
 	SetExpertsWeights(ctx context.Context, sid int64, weights entity.Weights) error
+	Complete(ctx context.Context, sid int64) error
 }
 
 type Matrix interface {

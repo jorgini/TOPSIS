@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 	v "webApp/lib/variables"
 )
 
@@ -44,6 +45,8 @@ func (r *Rating) MarshalJSON() ([]byte, error) {
 		return json.Marshal(r.Evaluated.ConvertToIT2FS(v.Default))
 	case *AIFS:
 		return json.Marshal(r.Evaluated.ConvertToAIFS(v.Default))
+	case Linguistic:
+		return json.Marshal(r.Evaluated)
 	case nil:
 		return json.Marshal(nil)
 	default:
@@ -52,36 +55,68 @@ func (r *Rating) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Rating) UnmarshalJSON(data []byte) error {
-	var t2 = IT2FS{Bottom: make([]Interval, 0), Upward: make([]Number, 0)}
-	err := json.Unmarshal(data, &t2)
-	if err == nil && len(t2.Bottom) > 0 {
-		r.Evaluated = &t2
-		return nil
+	if strings.Contains(string(data), "mark") {
+		var m = struct {
+			Mark string `json:"mark"`
+		}{}
+		if err := json.Unmarshal(data, &m); err != nil {
+			return err
+		}
+
+		dataTmp := []byte(strings.Replace(string(data), "mark", "smt", -1))
+		var e = struct {
+			Eval Rating `json:"eval"`
+		}{}
+		if err := json.Unmarshal(dataTmp, &e); err == nil {
+			r.Evaluated = Linguistic{Mark: m.Mark, Rating: e.Eval}
+			return nil
+		} else {
+			return err
+		}
 	}
 
-	var a = AIFS{T1FS: &T1FS{Vert: make([]Number, 0)}}
-	err = json.Unmarshal(data, &a)
-	if err == nil && len(a.Vert) > 0 {
-		r.Evaluated = &a
-		return nil
+	if strings.Contains(string(data), "bottom") {
+		var t2 = IT2FS{Bottom: make([]Interval, 0), Upward: make([]Number, 0)}
+		if err := json.Unmarshal(data, &t2); err == nil {
+			r.Evaluated = &t2
+			return nil
+		} else {
+			return err
+		}
 	}
 
-	var t1 = T1FS{Vert: make([]Number, 0)}
-	err = json.Unmarshal(data, &t1)
-	if err == nil && len(t1.Vert) > 0 {
-		r.Evaluated = &t1
-		return nil
+	if strings.Contains(string(data), "pi") {
+		var a = AIFS{T1FS: &T1FS{Vert: make([]Number, 0)}}
+		if err := json.Unmarshal(data, &a); err == nil && len(a.Vert) > 0 {
+			r.Evaluated = &a
+			return nil
+		} else {
+			return err
+		}
 	}
 
-	var i Interval
-	err = json.Unmarshal(data, &i)
-	if err == nil {
-		r.Evaluated = i
-		return nil
+	if strings.Contains(string(data), "vert") {
+		var t1 = T1FS{Vert: make([]Number, 0)}
+		if err := json.Unmarshal(data, &t1); err == nil && len(t1.Vert) > 0 {
+			r.Evaluated = &t1
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	if strings.Contains(string(data), "start") {
+		var i Interval
+		if err := json.Unmarshal(data, &i); err == nil {
+			r.Evaluated = i
+			return nil
+		} else {
+			return err
+		}
 	}
 
 	var n float64
-	err = json.Unmarshal(data, &n)
+	err := json.Unmarshal(data, &n)
 	if err == nil {
 		r.Evaluated = Number(n)
 		return nil

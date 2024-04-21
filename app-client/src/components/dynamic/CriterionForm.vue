@@ -1,6 +1,7 @@
 <script setup>
   const criterion = defineModel('criterion');
   const role = defineModel('role');
+  const emits = defineEmits(['delete-criterion', 'corr-rate', 'incorr-rate']);
 </script>
 
 <script>

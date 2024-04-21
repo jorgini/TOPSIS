@@ -1,5 +1,7 @@
 <script setup>
 const t1fs = defineModel();
+const role = defineModel('role');
+const emits = defineEmits(["corr-rate", "incorr-rate"]);
 </script>
 
 <script>
@@ -62,22 +64,22 @@ const t1fs = defineModel();
 
 <template>
   <div class="t1fs">
-    <select @change="changeFigure" v-model="selectedFig">
+    <select @change="changeFigure" v-model="selectedFig" :disabled="role==='expert'">
       <option>Треугольник</option>
       <option>Трапеция</option>
     </select>
     <p>a:</p>
-    <input type="number" :class="{field: true, invalid: !isValid[0]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValid[0]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="t1fs.vert[0]" @input="validateNumber(0)">
     <p>b:</p>
-    <input type="number" :class="{field: true, invalid: !isValid[1]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValid[1]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="t1fs.vert[1]" @input="validateNumber(1)">
     <p>c:</p>
-    <input type="number" :class="{field: true, invalid: !isValid[2]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValid[2]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="t1fs.vert[2]" @input="validateNumber(2)">
     <p v-if="t1fs.vert.length > 3">d:</p>
     <input v-if="t1fs.vert.length > 3" type="number" :class="{field: true, invalid: !isValid[3]}" name="vert"
-           placeholder="0.0" maxlength="10" v-model="t1fs.vert[3]" @input="validateNumber(3)">
+           :readonly="role==='expert'" placeholder="0.0" maxlength="10" v-model="t1fs.vert[3]" @input="validateNumber(3)">
   </div>
 </template>
 

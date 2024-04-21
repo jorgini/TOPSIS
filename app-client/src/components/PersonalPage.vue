@@ -65,6 +65,15 @@
           this.$emit('show-component', 'TaskSet');
         }
       },
+      async showFinal(i) {
+        await this.$store.dispatch("showTask", this.tasks[i].sid);
+        if (this.$store.getters['errorOccurred']) {
+          console.log(this.$store.getters['errorOccurred']);
+          document.getElementById('warning').innerHTML = "<p class='error'>" + this.$store.getters['errorOccurred'] + "</p>"
+        } else {
+          this.$emit('show-component', 'Final');
+        }
+      },
       async deleteTask(i) {
         await this.$store.dispatch('deleteTask', this.tasks[i].sid);
         if (this.$store.getters['errorOccurred']) {
@@ -145,7 +154,8 @@
     <h1>Ваши задачи ({{ cntTasks }} / 30)</h1>
     <div id="warning"></div>
     <div id="list">
-      <Task v-for="(_, i) in tasks" v-model="tasks[i]" @show-task="showTask(i)" @delete-task="deleteTask(i)"></Task>
+      <Task v-for="(_, i) in tasks" v-model="tasks[i]" @show-task="showTask(i)" @show-final="showFinal(i)"
+            @delete-task="deleteTask(i)"></Task>
     </div>
     <div class="btns">
       <button class="blk-btn create" @click="showModal">Создать задачу</button>

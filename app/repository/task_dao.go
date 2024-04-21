@@ -287,3 +287,19 @@ func (t *TaskDao) SetExpertsWeights(ctx context.Context, sid int64, weights enti
 	}
 	return t.c.CloseConnection()
 }
+
+func (t *TaskDao) Complete(ctx context.Context, sid int64) error {
+	query := fmt.Sprintf("UPDATE %s SET status= $1 WHERE sid=$2", t.cfg.TaskTable)
+
+	conn := t.c.GetConnection()
+	if conn == nil {
+		return errors.New("cant connect to db")
+	}
+
+	if result, err := conn.ExecContext(ctx, query, entity.Complete, sid); err != nil {
+		return errors.Join(err, t.c.CloseConnection())
+	} else if n, err := result.RowsAffected(); err != nil || n == 0 {
+		return errors.Join(errors.New("nothing to update"), t.c.CloseConnection())
+	}
+	return t.c.CloseConnection()
+}

@@ -51,8 +51,20 @@ func (h *Handler) GetFinal(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusBadRequest, err)
 	}
 
+	if err := svc.Task.ValidateUser(c.UserContext(), uid, sid); err != nil {
+		result, err := svc.Final.GetFinal(c.UserContext(), sid)
+		if err != nil {
+			return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("final doesn't calculate by maintainer yet"))
+		}
+		return c.JSON(result)
+	}
+
 	result, err := svc.Final.PresentFinal(c.UserContext(), sid, request.Threshold)
 	if err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	}
+
+	if err = svc.Task.Complete(c.UserContext(), sid); err != nil {
 		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
 	}
 

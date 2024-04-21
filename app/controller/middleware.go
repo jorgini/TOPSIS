@@ -25,7 +25,7 @@ func SetMiddleware(api fiber.Router, config *configs.AppConfig) {
 
 func SkipMiddleware(c *fiber.Ctx) bool {
 	url := strings.Clone(c.OriginalURL())
-	if strings.Contains(url, "/auth") {
+	if strings.Contains(url, "/auth") || url == "/solution/defaults" {
 		return true
 	}
 	return false

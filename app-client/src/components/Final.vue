@@ -21,7 +21,7 @@
         isValidWeight: null,
         threshold: null,
         isValidThreshold: true,
-        final: null
+        final: null,
       }
     },
     methods: {
@@ -47,6 +47,9 @@
       showPP() {
         this.$emit('show-component', 'Personal');
       },
+      showResult() {
+        this.isReady = true;
+      },
       submitWeights() {
         for (const fact of this.isValidWeight) {
           if (!fact) {
@@ -66,11 +69,13 @@
         modal.close();
       },
       defaultWeights() {
-        this.$store.dispatch('setExpertsWeights', {sid: this.task.sid, weights: []});
-        if (this.$store.getters['errorOccurred']) {
-          console.log((this.$store.getters['errorOccurred']))
-          this.$emit('show-component', 'ErrorPage')
-          return
+        if (this.role === 'maintainer') {
+          this.$store.dispatch('setExpertsWeights', {sid: this.task.sid, weights: []});
+          if (this.$store.getters['errorOccurred']) {
+            console.log((this.$store.getters['errorOccurred']))
+            this.$emit('show-component', 'ErrorPage')
+            return
+          }
         }
         this.isVisibleExperts = false;
         const modal = document.getElementById('experts');
@@ -87,7 +92,9 @@
         }
       },
       defaultThreshold() {
-        this.threshold = -1;
+        if (this.role === 'maintainer')
+          this.threshold = -1;
+
         this.isVisibleSetting = false;
         const modal = document.getElementById('setting');
         modal.close();
@@ -108,6 +115,7 @@
         }
       },
       async calcFinal() {
+        this.isReady = false;
         if (this.threshold === null || this.threshold === -1) {
           await this.$store.dispatch('takeFinal', {sid: this.task.sid, threshold: {}});
         } else {
@@ -119,40 +127,59 @@
           this.$emit('show-component', 'ErrorPage');
           return
         }
+
         this.final = this.$store.getters['getFinal'];
-        this.isReady = true;
+        this.showResult();
       },
     },
     async mounted() {
       this.task = this.$store.getters['getTaskSettings'];
+
+      if (this.task === null) {
+        this.$store.commit('setError', "unknown error");
+        this.$emit("show-component", "ErrorPage");
+        return
+      }
+
+      await this.$store.dispatch('showAlts', this.task.sid);
+      if (this.$store.getters['errorOccurred']) {
+        console.log((this.$store.getters['errorOccurred']))
+        this.$emit('show-component', 'ErrorPage')
+        return
+      }
+
       this.alts = this.$store.getters['getAlts'];
       this.final = this.$store.getters['getFinal'];
 
+      if (this.task.task_type === 'individual') {
+        this.role = 'maintainer';
+        this.defaultWeights();
+      } else {
+        this.experts = await this.$store.dispatch('getExperts', this.task.sid);
+        if (this.$store.getters['errorOccurred']) {
+          console.log((this.$store.getters['errorOccurred']))
+          this.$emit('show-component', 'ErrorPage')
+          return
+        }
+
+        this.weights = new Array(this.experts.length).fill(1.0);
+        this.weightType = new Array((this.experts.length)).fill('Число');
+        this.curType = new Array(this.experts.length).fill('Число');
+        this.isValidWeight = new Array(this.experts.length).fill(true);
+
+        this.role = await this.$store.dispatch('getRole', this.task.sid);
+        if (this.$store.getters['errorOccurred']) {
+          console.log((this.$store.getters['errorOccurred']))
+          this.$emit('show-component', 'ErrorPage')
+          return
+        }
+      }
+
       if (this.final === null || this.final.fid !== this.task.sid) {
         this.showSetting();
-        if (this.task.task_type === 'individual') {
-          this.defaultWeights();
-        } else {
-          this.experts = await this.$store.dispatch('getExperts', this.task.sid);
-          if (this.$store.getters['errorOccurred']) {
-            console.log((this.$store.getters['errorOccurred']))
-            this.$emit('show-component', 'ErrorPage')
-            return
-          }
 
-          this.weights = new Array(this.experts.length).fill(1.0);
-          this.weightType = new Array((this.experts.length)).fill('Число');
-          this.curType = new Array(this.experts.length).fill('Число');
-          this.isValidWeight = new Array(this.experts.length).fill(true);
-
-          this.role = await this.$store.dispatch('getRole', this.task.sid);
-          if (this.$store.getters['errorOccurred']) {
-            console.log((this.$store.getters['errorOccurred']))
-            this.$emit('show-component', 'ErrorPage')
-            return
-          }
-          this.showExperts()
-        }
+        if (this.task.task_type === 'group')
+          this.showExperts();
       } else {
         this.isReady = true;
       }
@@ -180,7 +207,7 @@
       <div class="exp" v-for="(_, i) in experts">
         <p>{{ experts[i].login }}</p>
         <p>{{ experts[i].status === true ? 'Завершено' : 'Черновик' }}</p>
-        <div v-if="role==='maintainer'" class="weight" @change="changeWeightType(i)">
+        <div v-if="role==='maintainer' && task.task_type==='group'" class="weight" @change="changeWeightType(i)">
           <select v-model="weightType[i]">
             <option>Число</option>
             <option>Интервал</option>
@@ -192,18 +219,18 @@
         </div>
       </div>
       <div class="btns">
-        <button class="blk-btn" @click="submitWeights">Подтвердить</button>
+        <button v-if="role==='maintainer'" class="blk-btn" @click="submitWeights">Подтвердить</button>
         <button class="cl-btn" @click="defaultWeights">Пропустить</button>
       </div>
     </dialog>
 
     <dialog id="setting">
       <p>Порог для анализа чувствительности:</p>
-      <input type="number" :class="{field: true, invalid: !isValidThreshold}" name="threshold"
+      <input type="number" :class="{field: true, invalid: !isValidThreshold}" name="threshold" :readonly="role==='expert'"
              placeholder="0.0" maxlength="100" v-model="threshold" @input="validateThreshold" required/>
       <div class="btns">
         <button class="cl-btn" @click="showTS">Вернутся к настройкам вычислений</button>
-        <button class="blk-btn" @click="submitThreshold">Подтвердить</button>
+        <button v-if="role==='maintainer'" class="blk-btn" @click="submitThreshold">Подтвердить</button>
         <button class="cl-btn" @click="defaultThreshold">Пропустить</button>
       </div>
     </dialog>
@@ -213,7 +240,7 @@
       <button class="blk-btn" @click="calcFinal">Вычислить</button>
     </div>
 
-    <Result v-if="isReady" :results="final" :alts="alts"></Result>
+    <Result v-if="isReady" v-model:results="final" v-model:alts="alts" :type="task.method"></Result>
   </div>
 
   <footer class="footer" style="flex-shrink: 0">

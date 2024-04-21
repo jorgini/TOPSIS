@@ -1,5 +1,7 @@
 <script setup>
 const it2fs = defineModel();
+const role = defineModel('role');
+const emits = defineEmits(["corr-rate", "incorr-rate"]);
 </script>
 
 <script>
@@ -120,32 +122,32 @@ export default {
 
 <template>
   <div class="it2fs">
-    <select @change="changeFigure" v-model="selectedFig">
+    <select @change="changeFigure" v-model="selectedFig" :disabled="role==='expert'">
       <option>Треугольник</option>
       <option>Трапеция</option>
     </select>
     <p>_a:</p>
-    <input type="number" :class="{field: true, invalid: !isValidBottom[0]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidBottom[0]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[0].start" @input="validateBottom(0)">
 
     <p>^a:</p>
-    <input type="number" :class="{field: true, invalid: !isValidBottom[1]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidBottom[1]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[0].end" @input="validateBottom(1)">
 
     <p>b:</p>
-    <input type="number" :class="{field: true, invalid: !isValidUpward[0]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidUpward[0]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="it2fs.upward[0]" @input="validateUpward(0)">
 
     <p v-if="it2fs.upward.length > 1">c:</p>
     <input v-if="it2fs.upward.length > 1" type="number" :class="{field: true, invalid: !isValidUpward[1]}" name="vert"
-           placeholder="0.0" maxlength="10" v-model="it2fs.upward[1]" @input="validateUpward(1)">
+           :readonly="role==='expert'" placeholder="0.0" maxlength="10" v-model="it2fs.upward[1]" @input="validateUpward(1)">
 
     <p>{{ (it2fs.upward.length === 1) ? "_c" : "_d" }}:</p>
-    <input type="number" :class="{field: true, invalid: !isValidBottom[2]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidBottom[2]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[1].start" @input="validateBottom(2)">
 
     <p>{{ (it2fs.upward.length === 1) ? "^c" : "^d" }}:</p>
-    <input type="number" :class="{field: true, invalid: !isValidBottom[3]}" name="vert"
+    <input type="number" :class="{field: true, invalid: !isValidBottom[3]}" name="vert" :readonly="role==='expert'"
            placeholder="0.0" maxlength="10" v-model="it2fs.bottom[1].end" @input="validateBottom(3)">
   </div>
 </template>

@@ -9,8 +9,8 @@ import (
 )
 
 type AIFS struct {
-	*T1FS `json:"t1fs"`
-	Pi    Number `json:"pi"`
+	*T1FS
+	Pi Number `json:"pi"`
 }
 
 func NewAIFS(Pi Number, Vert ...Number) *AIFS {

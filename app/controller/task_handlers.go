@@ -365,6 +365,18 @@ func (h *Handler) ConnectToTask(c *fiber.Ctx) error {
 		return sendErrorResponse(c, fiber.StatusForbidden, err)
 	}
 
+	if alts, err := svc.Task.GetAlts(c.UserContext(), request.SID); err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	} else if len(alts) == 0 {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("maintainer doesn't specified alternatives yet"))
+	}
+
+	if criteria, err := svc.Task.GetCriteria(c.UserContext(), request.SID); err != nil {
+		return sendErrorResponse(c, fiber.StatusInternalServerError, err)
+	} else if len(criteria) == 0 {
+		return sendErrorResponse(c, fiber.StatusBadRequest, errors.New("maintainer doesn't specified criteria yet"))
+	}
+
 	return c.JSON(response{Message: "success"})
 }
 
@@ -440,7 +452,7 @@ func (h *Handler) GetExperts(c *fiber.Ctx) error {
 	}
 
 	svc := h.di.GetInstanceService()
-	if err := svc.Task.ValidateUser(c.UserContext(), uid, sid); err != nil {
+	if err := svc.Task.CheckAccess(c.UserContext(), uid, sid); err != nil {
 		return sendErrorResponse(c, fiber.StatusForbidden, err)
 	}
 
@@ -494,4 +506,19 @@ func (h *Handler) DeactivateStatuses(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response{Message: "success"})
+}
+
+// GetDefaultLingScale godoc
+// @summary GetDefaultLingScale
+// @description get defaults linguistic scales
+// @security ApiKeyAuth
+// @id get-default-scales
+// @tags task
+// @accept json
+// @produce json
+// @success 200 {object} fiber.Map
+// @router /solution/defaults [get]
+func (h *Handler) GetDefaultLingScale(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{"number": eval.DefaultNumberScale, "interval": eval.DefaultIntervalScale,
+		"t1fs": eval.DefaultT1FSScale})
 }

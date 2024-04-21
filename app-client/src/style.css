@@ -67,7 +67,7 @@ h1 {
 }
 
 .btns {
-    width: fit-content;
+    width: max-content;
     padding: 0;
     margin: 6vmin auto;
 }
@@ -79,7 +79,7 @@ h1 {
 }
 
 dialog {
-    width: 50%;
+    width: 60%;
     background-color: #ABF8F4;
     text-align: center;
     border: 1px solid black;

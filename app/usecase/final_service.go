@@ -63,6 +63,7 @@ func (f *FinalService) PresentFinal(ctx context.Context, sid int64, threshold fl
 	}
 
 	result, err := entity.CalcFinal(matrices, task, threshold)
+
 	if err != nil {
 		return nil, err
 	}

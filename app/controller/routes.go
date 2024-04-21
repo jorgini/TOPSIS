@@ -48,6 +48,8 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 
 	solGroup := api.Group("/solution")
 	{
+		solGroup.Get("/defaults", h.GetDefaultLingScale)
+
 		solSettings := solGroup.Group("/settings")
 		{
 			solSettings.Put("/", h.UpdateTask)

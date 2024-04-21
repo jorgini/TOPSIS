@@ -1,18 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Kavoon&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
 
-.col {
-    text-align: center;
-    max-height: 12vh;
-}
-
-.blk-btn {
+.blk-btn, .cl-btn {
     font-size: 2.3vmin;
 }
 
-.selector {
-    height: 30%;
-    margin: auto;
+.btns > * {
+    margin-top: 0.2vmin;
+    margin-bottom: 0.2vmin;
 }
 
 .annot {

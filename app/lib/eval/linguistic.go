@@ -57,3 +57,12 @@ func (l *LinguisticScale) Scan(src interface{}) error {
 	*l = ling
 	return nil
 }
+
+type Linguistic struct {
+	Mark string `json:"mark"`
+	Rating
+}
+
+func (l Linguistic) CopyEval() Rating {
+	return Rating{Linguistic{Mark: l.Mark, Rating: l.Rating.CopyEval()}}
+}

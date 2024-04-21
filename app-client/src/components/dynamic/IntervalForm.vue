@@ -1,6 +1,7 @@
 <script setup>
 const int = defineModel();
 const role = defineModel('role');
+const emits = defineEmits(["corr-rate", "incorr-rate"]);
 </script>
 
 <script>
@@ -57,7 +58,7 @@ const role = defineModel('role');
   </div>
 </template>
 
-<style>
+<style scoped>
 @import "../../style.css";
 
 .interval > p {
