@@ -17,7 +17,7 @@ const alts = defineModel('alts');
       });
 
       const dataRanking = this.type === 'smart' ?
-          this.results.result.order.map(ord => (ord + 1)) :
+          new Array.from({ length: this.alts.length }, (_, i) => i + 1).reverse() :
           this.results.result.coeffs
               .map(score => {
                 if (typeof score === 'number')
@@ -30,10 +30,7 @@ const alts = defineModel('alts');
       new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: this.alts
-              .map(alt => {
-                return alt.title
-              }),
+          labels: this.results.result.order.map(ord => this.alts[ord].title),
           datasets: [{
             label: 'Alts Ranking',
             data: dataRanking,
@@ -49,44 +46,49 @@ const alts = defineModel('alts');
             }
           }
         }
-      });
+      })
 
       const ctx2 = document.getElementById('myRadar');
 
-      const dataSets = this.results.sens_analysis.Results
-              .map(res => {
-                if (this.type === 'smart') {
-                  return res.order.map(ord => (ord + 1))
-                } else {
-                  return res.coeffs.map(score => {
-                    if (typeof score === 'number') {
-                      return score
-                    } else {
-                      return (score.start + score.end) / 2;
-                    }
-                  });
-                }
-              });
-
-      let j = 0;
       const labels = Array.from({ length: this.results.sens_analysis.Results.length }, (_, i) => `sens-${i + 1}`);
-      console.log(labels);
+      const altsData = this.alts
+          .map(alt => {
+            return {
+              label: alt.title,
+              data: null,
+              backgroundColor: null,
+              fill: null
+            }
+          });
+
+      console.log(this.results.sens_analysis)
+      for (let j = 0; j < this.alts.length; j++) {
+        altsData[j].data = this.results.sens_analysis.Results
+            .map(stats => {
+              let rank = stats.order.indexOf(j);
+              if (this.type === 'smart') {
+                return this.alts.length - rank;
+              } else {
+                if (typeof stats.coeffs[rank] === 'number') {
+                  return stats.coeffs[rank];
+                } else {
+                  return (stats.coeffs[rank].start + stats.coeffs[rank].end) / 2;
+                }
+              }
+            });
+
+        const fill = palette[this.results.result.order.indexOf(j)].rgba();
+        altsData[j].backgroundColor = `rgba(${fill[0]}, ${fill[1]}, ${fill[2]}, 0.7)`;
+        altsData[j].fill = {
+          target: "origin",
+        };
+      }
+
       new Chart(ctx2, {
         type: 'radar',
         data: {
           labels: labels,
-          datasets: this.alts
-              .map(alt => {
-                const res = {
-                  label: alt.title,
-                  data: dataSets
-                      .map(rank => rank[j]),
-                  backgroundColor: palette[j],
-                  fill: -1
-                };
-                j++;
-                return res
-              }),
+          datasets: altsData,
         },
         options: {
           plugins: {
