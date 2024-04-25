@@ -1,7 +1,6 @@
 package matrix
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
@@ -160,35 +159,19 @@ func TypingMatrices(matrices ...Matrix) error {
 	x, y := matrices[0].CountAlternatives, matrices[0].CountCriteria
 	var highestType string
 	var highestForm v.Variants
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	wg.Add(len(matrices))
+	var wg sync.WaitGroup
+
 	for k := range matrices {
 		if matrices[k].CountAlternatives != x || matrices[k].CountCriteria != y {
-			cancel()
 			return v.InvalidSize
 		}
 
-		go func(k int, ctx context.Context) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				mu.Lock()
-				highestType = eval.HighType(highestType, matrices[k].HighType)
-				if highestForm < matrices[k].FormFs {
-					highestForm = matrices[k].FormFs
-				}
-				mu.Unlock()
-			}
-		}(k, ctx)
+		highestType = eval.HighType(highestType, matrices[k].HighType)
+		if highestForm < matrices[k].FormFs {
+			highestForm = matrices[k].FormFs
+		}
 	}
-
-	wg.Wait()
 
 	wg.Add(len(matrices))
 	for k := range matrices {
@@ -197,21 +180,13 @@ func TypingMatrices(matrices ...Matrix) error {
 			matrices[k].castToType(highestType, highestForm)
 		}(k)
 	}
-
 	wg.Wait()
 
 	weightType := eval.NumbersMin.GetType()
-	wg.Add(len(matrices))
-	for k := range matrices {
-		go func(k int) {
-			defer wg.Done()
-			mu.Lock()
-			weightType = eval.HighType(weightType, GetHighType(matrices[k].Criteria))
-			mu.Unlock()
-		}(k)
-	}
 
-	wg.Wait()
+	for k := range matrices {
+		weightType = eval.HighType(weightType, GetHighType(matrices[k].Criteria))
+	}
 
 	if weightType == (eval.Interval{}).GetType() {
 		wg.Add(len(matrices))
@@ -223,9 +198,9 @@ func TypingMatrices(matrices ...Matrix) error {
 				}
 			}(k)
 		}
+		wg.Wait()
 	}
 
-	wg.Wait()
 	return nil
 }
 
@@ -235,28 +210,26 @@ func AggregateRatings(matrices []Matrix, weights []eval.Evaluated) (*Matrix, err
 		return nil, err
 	}
 
-	var wg1 sync.WaitGroup
-	var mu sync.Mutex
+	var wg sync.WaitGroup
 
-	wg1.Add(len(matrices))
-	for k := range matrices {
-		go func(k int) {
-			defer wg1.Done()
-
-			for i := range matrices[k].Data {
-				for j, rating := range matrices[k].Data[i].Grade {
-					mu.Lock()
+	wg.Add(len(result.Data))
+	for i := range result.Data {
+		go func(i int) {
+			defer wg.Done()
+			for j := range result.Data[i].Grade {
+				for k := range matrices {
 					if result.Data[i].Grade[j].IsNil() {
-						_ = result.SetValue(rating.Weighted(weights[k]), i, j)
+						_ = result.SetValue(matrices[k].Data[i].Grade[j].Weighted(weights[k]), i, j)
 					} else {
-						_ = result.SetValue(result.Data[i].Grade[j].Sum(rating.Weighted(weights[k])), i, j)
+						_ = result.SetValue(result.Data[i].Grade[j].Sum(matrices[k].Data[i].Grade[j].Weighted(weights[k])),
+							i, j)
 					}
-					mu.Unlock()
 				}
 			}
-		}(k)
+		}(i)
 	}
-	wg1.Wait()
+	wg.Wait()
+
 	for i := range result.Criteria {
 		result.Criteria[i].set(matrices[0].Criteria[i].Weight, matrices[0].Criteria[i].TypeOfCriteria)
 	}

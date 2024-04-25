@@ -173,15 +173,9 @@ func (m *Matrix) normalizationValue(variants v.Variants) error {
 					return
 				}
 
-				var wg2 sync.WaitGroup
-				wg2.Add(m.CountAlternatives)
 				for i := range m.Data {
-					go func(i int) {
-						defer wg2.Done()
-						m.Data[i].Grade[j] = getNormValueByMax(m.Data[i].Grade[j], minimum, maximum, c.TypeOfCriteria)
-					}(i)
+					m.Data[i].Grade[j] = getNormValueByMax(m.Data[i].Grade[j], minimum, maximum, c.TypeOfCriteria)
 				}
-				wg2.Wait()
 			}(j, c)
 		}
 
@@ -209,21 +203,15 @@ func (m *Matrix) normalizationWeights(variants v.Variants) error {
 		return v.EmptyValues
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(m.CountCriteria)
 	for j, c := range m.Criteria {
-		go func(j int, c Criterion) {
-			defer wg.Done()
-			if c.Weight.GetType() == (eval.Interval{}).GetType() && variants != v.NormalizeWeightsByMidPoint {
-				m.Criteria[j].Weight.Evaluated = eval.Interval{Start: c.Weight.ConvertToInterval().Start / highSum,
-					End: c.Weight.ConvertToInterval().End / lowerSum}
-			} else {
-				m.Criteria[j].Weight = c.Weight.Weighted(1 / highSum)
-			}
-		}(j, c)
+		if c.Weight.GetType() == (eval.Interval{}).GetType() && variants != v.NormalizeWeightsByMidPoint {
+			m.Criteria[j].Weight.Evaluated = eval.Interval{Start: c.Weight.ConvertToInterval().Start / highSum,
+				End: c.Weight.ConvertToInterval().End / lowerSum}
+		} else {
+			m.Criteria[j].Weight = c.Weight.Weighted(1 / highSum)
+		}
 	}
 
-	wg.Wait()
 	return nil
 }
 
@@ -232,6 +220,7 @@ func (m *Matrix) Normalization(values v.Variants, weights v.Variants) error {
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
@@ -260,7 +249,6 @@ func (m *Matrix) Normalization(values v.Variants, weights v.Variants) error {
 	}()
 
 	wg.Wait()
-
 	return err
 }
 

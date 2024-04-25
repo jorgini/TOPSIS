@@ -1,9 +1,7 @@
 package matrix
 
 import (
-	"context"
 	"math"
-	"sync"
 	"webApp/lib/eval"
 	v "webApp/lib/variables"
 )
@@ -11,6 +9,7 @@ import (
 type Alternative struct {
 	Grade           []eval.Rating `json:"grade"`
 	CountOfCriteria int           `json:"cnt_of_crit"`
+	_               [60]byte
 }
 
 func newAlternative(size int) Alternative {
@@ -29,44 +28,21 @@ func (a *Alternative) String() string {
 	return s + " ]"
 }
 
-func (a *Alternative) NumberMetric(to *Alternative, variants v.Variants) (eval.Number, error) {
+func (a *Alternative) NumberMetric(to Alternative, vn v.Variants) (eval.Number, error) {
 	if a.CountOfCriteria != to.CountOfCriteria {
 		return 0, v.InvalidSize
 	}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var err error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	result := eval.Number(0)
-	wg.Add(a.CountOfCriteria)
 	for i := 0; i < a.CountOfCriteria; i++ {
-		go func(i int, mut *sync.Mutex) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if tmp, innerError := a.Grade[i].DiffNumber(to.Grade[i].ConvertToNumber(), variants); innerError != nil {
-					err = innerError
-					cancel()
-					return
-				} else {
-					mut.Lock()
-					result += tmp
-					mut.Unlock()
-				}
-			}
-		}(i, &mu)
-	}
-	wg.Wait()
-	if err != nil {
-		return 0, err
+		if tmp, err := a.Grade[i].DiffNumber(to.Grade[i].ConvertToNumber(), vn); err != nil {
+			return 0, err
+		} else {
+			result += tmp
+		}
 	}
 
-	if variants == v.SqrtDistance {
+	if vn == v.SqrtDistance {
 		result = eval.Number(math.Sqrt(float64(result)))
 	} else {
 		result = eval.Number(math.Cbrt(float64(result)))
@@ -75,43 +51,18 @@ func (a *Alternative) NumberMetric(to *Alternative, variants v.Variants) (eval.N
 	return result, nil
 }
 
-func (a *Alternative) IntervalMetric(to *Alternative, Criteria []Criterion, variants v.Variants) (eval.Interval, error) {
+func (a *Alternative) IntervalMetric(to Alternative, Criteria []Criterion, variants v.Variants) (eval.Interval, error) {
 	if a.CountOfCriteria != to.CountOfCriteria {
 		return eval.Interval{}, v.InvalidSize
 	}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var err error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	result := eval.Interval{}
-	wg.Add(len(Criteria))
 	for i, c := range Criteria {
-		go func(i int, c Criterion, mut *sync.Mutex) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if tmp, innerError := a.Grade[i].DiffInterval(to.Grade[i].ConvertToInterval(), c.TypeOfCriteria, variants); innerError != nil {
-					err = innerError
-					cancel()
-					return
-				} else {
-					mut.Lock()
-					result = result.Sum(tmp).ConvertToInterval()
-					mut.Unlock()
-				}
-			}
-		}(i, c, &mu)
-	}
-
-	wg.Wait()
-
-	if err != nil {
-		return eval.Interval{}, err
+		if tmp, err := a.Grade[i].DiffInterval(to.Grade[i].ConvertToInterval(), c.TypeOfCriteria, variants); err != nil {
+			return eval.Interval{}, err
+		} else {
+			result = result.Sum(tmp).ConvertToInterval()
+		}
 	}
 
 	if variants == v.SqrtDistance {
@@ -125,46 +76,21 @@ func (a *Alternative) IntervalMetric(to *Alternative, Criteria []Criterion, vari
 	return result.ConvertToInterval(), nil
 }
 
-func (a *Alternative) FSMetric(to *Alternative, variants v.Variants) (eval.Number, error) {
+func (a *Alternative) FSMetric(to Alternative, vn v.Variants) (eval.Number, error) {
 	if a.CountOfCriteria != to.CountOfCriteria {
 		return 0, v.InvalidSize
 	}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var err error
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	result := eval.Number(0)
-	wg.Add(a.CountOfCriteria)
 	for i := 0; i < a.CountOfCriteria; i++ {
-		go func(i int, mut *sync.Mutex) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if tmp, innerError := a.Grade[i].DiffNumber(to.Grade[i], variants); innerError != nil {
-					err = innerError
-					cancel()
-					return
-				} else {
-					mut.Lock()
-					result += tmp
-					mut.Unlock()
-				}
-			}
-		}(i, &mu)
+		if tmp, err := a.Grade[i].DiffNumber(to.Grade[i], vn); err != nil {
+			return 0, err
+		} else {
+			result += tmp
+		}
 	}
 
-	wg.Wait()
-
-	if err != nil {
-		return 0, err
-	}
-
-	if variants == v.SqrtDistance {
+	if vn == v.SqrtDistance {
 		result = eval.Number(math.Sqrt(float64(result)))
 	} else {
 		result = eval.Number(math.Cbrt(float64(result)))
