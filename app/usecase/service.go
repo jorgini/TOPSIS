@@ -74,7 +74,7 @@ type Service struct {
 
 func NewService(repo *repository.Repository) *Service {
 	return &Service{
-		User:    NewUserService(repo.User, repo.Matrix),
+		User:    NewUserService(repo.User, repo.Task, repo.Matrix),
 		Session: NewSessionService(repo.Session),
 		Task:    NewTaskService(repo.Task, repo.Matrix, repo.IConnectionFactory),
 		Matrix:  NewMatrixService(repo.Matrix, repo.Task, repo.IConnectionFactory),

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/rand"
+	"runtime"
 	"sync"
 	"time"
 	"webApp/lib/eval"
@@ -137,54 +138,77 @@ func randomChange(m *matrix.Matrix, threshold float64, gen *rand.Rand) matrix.Ma
 
 func TopsisFullCalc(settings CalcSettings, mxs []matrix.Matrix, weights []eval.Evaluated) (matrix.RankedList, error) {
 	var err error
+	var g = runtime.NumCPU()
+
 	if settings.Aggregating == v.AggregateMatrix {
-		aggMatrix, err := matrix.AggregateRatings(mxs, weights)
+		aggMatrix, err := matrix.AggregateRatings(mxs, weights, g)
 		if err != nil {
 			return matrix.RankedList{}, err
 		}
 
 		resultMatrix := topsis.ConvertToTopsisMatrix(aggMatrix)
-		if err = resultMatrix.Normalization(settings.ValueNorm, settings.WeighNorm); err != nil {
+		if err = resultMatrix.Normalization(settings.ValueNorm, settings.WeighNorm, g); err != nil {
 			return matrix.RankedList{}, err
 		}
 
-		resultMatrix.CalcWeightedMatrix()
+		resultMatrix.CalcWeightedMatrix(g)
 
-		if err = resultMatrix.FindIdeals(settings.RankingAlg); err != nil {
+		if err = resultMatrix.FindIdeals(settings.RankingAlg, g); err != nil {
 			return matrix.RankedList{}, err
 		}
 
-		if err = resultMatrix.FindDistanceToIdeals(settings.FsDist, settings.IntDist, settings.NumDist); err != nil {
+		if err = resultMatrix.FindDistanceToIdeals(settings.FsDist, settings.IntDist, settings.NumDist, g); err != nil {
 			return matrix.RankedList{}, err
 		}
 
-		resultMatrix.CalcCloseness()
+		resultMatrix.CalcCloseness(g)
 		return resultMatrix.RankedList(settings.RankingAlg), nil
 	} else if settings.Aggregating == v.AggregateFinals {
 		matrices := make([]topsis.TopsisMatrix, len(mxs))
+
 		var wg sync.WaitGroup
-		wg.Add(len(mxs))
-		for i := range mxs {
-			go func(i int) {
+		var averG int
+		var batches int
+		if g > len(mxs) {
+			averG = g / len(mxs)
+			batches = len(mxs)
+		} else {
+			averG = 1
+			batches = g
+		}
+
+		wg.Add(batches)
+		for b := 0; b < batches; b++ {
+			go func(b int) {
 				defer wg.Done()
-				matrices[i] = *topsis.ConvertToTopsisMatrix(&mxs[i])
-				if inerr := matrices[i].Normalization(settings.ValueNorm, settings.WeighNorm); inerr != nil {
-					err = inerr
-					return
+
+				start := (len(mxs) / batches) * b
+				end := start + (len(mxs) / batches)
+				if b == batches-1 {
+					end = len(mxs)
+					averG = g - averG*(batches-1)
 				}
 
-				matrices[i].CalcWeightedMatrix()
+				for i := start; i < end; i++ {
+					matrices[i] = *topsis.ConvertToTopsisMatrix(&mxs[i])
+					if inerr := matrices[i].Normalization(settings.ValueNorm, settings.WeighNorm, averG); inerr != nil {
+						err = inerr
+						return
+					}
 
-				if inerr := matrices[i].FindIdeals(settings.RankingAlg); inerr != nil {
-					err = inerr
-					return
-				}
+					matrices[i].CalcWeightedMatrix(averG)
 
-				if inerr := matrices[i].FindDistanceToIdeals(settings.FsDist, settings.IntDist, settings.NumDist); inerr != nil {
-					err = inerr
-					return
+					if inerr := matrices[i].FindIdeals(settings.RankingAlg, averG); inerr != nil {
+						err = inerr
+						return
+					}
+
+					if inerr := matrices[i].FindDistanceToIdeals(settings.FsDist, settings.IntDist, settings.NumDist, averG); inerr != nil {
+						err = inerr
+						return
+					}
 				}
-			}(i)
+			}(b)
 		}
 		wg.Wait()
 		if err != nil {
@@ -196,7 +220,7 @@ func TopsisFullCalc(settings CalcSettings, mxs []matrix.Matrix, weights []eval.E
 			return matrix.RankedList{}, err
 		}
 
-		aggMatrix.CalcCloseness()
+		aggMatrix.CalcCloseness(g)
 		return aggMatrix.RankedList(settings.RankingAlg), nil
 	} else {
 		return matrix.RankedList{}, v.InvalidCaseOfOperation
@@ -205,41 +229,63 @@ func TopsisFullCalc(settings CalcSettings, mxs []matrix.Matrix, weights []eval.E
 
 func SmartFullCalc(settings CalcSettings, mxs []matrix.Matrix, weights []eval.Evaluated) (matrix.RankedList, error) {
 	var err error
+	var g = runtime.NumCPU()
+
 	if settings.Aggregating == v.AggregateMatrix {
-		aggMatrix, err := matrix.AggregateRatings(mxs, weights)
+		aggMatrix, err := matrix.AggregateRatings(mxs, weights, g)
 		if err != nil {
 			return matrix.RankedList{}, err
 		}
 
 		resultMatrix := smart.ConvertToSmartMatrix(aggMatrix)
 
-		if err := resultMatrix.Normalization(settings.ValueNorm, settings.WeighNorm); err != nil {
+		if err := resultMatrix.Normalization(settings.ValueNorm, settings.WeighNorm, g); err != nil {
 			return matrix.RankedList{}, err
 		}
 
-		resultMatrix.CalcWeightedMatrix()
+		resultMatrix.CalcWeightedMatrix(g)
 
-		resultMatrix.CalcFinalScore()
+		resultMatrix.CalcFinalScore(g)
 
 		return resultMatrix.RankedList(settings.RankingAlg), nil
 	} else if settings.Aggregating == v.AggregateFinals {
 		matrices := make([]smart.SmartMatrix, len(mxs))
 
 		var wg sync.WaitGroup
-		wg.Add(len(mxs))
-		for i := range mxs {
-			go func(i int) {
+		var averG int
+		var batches int
+		if g > len(mxs) {
+			averG = g / len(mxs)
+			batches = len(mxs)
+		} else {
+			averG = 1
+			batches = g
+		}
+
+		wg.Add(batches)
+		for b := 0; b < batches; b++ {
+			go func(b int) {
 				defer wg.Done()
-				matrices[i] = *smart.ConvertToSmartMatrix(&mxs[i])
-				if inerr := matrices[i].Normalization(settings.ValueNorm, settings.WeighNorm); inerr != nil {
-					err = inerr
-					return
+
+				start := (len(mxs) / batches) * b
+				end := start + (len(mxs) / batches)
+				if b == batches-1 {
+					end = len(mxs)
+					averG = g - averG*(batches-1)
 				}
 
-				matrices[i].CalcWeightedMatrix()
+				for i := start; i < end; i++ {
+					matrices[i] = *smart.ConvertToSmartMatrix(&mxs[i])
+					if inerr := matrices[i].Normalization(settings.ValueNorm, settings.WeighNorm, averG); inerr != nil {
+						err = inerr
+						return
+					}
 
-				matrices[i].CalcFinalScore()
-			}(i)
+					matrices[i].CalcWeightedMatrix(averG)
+
+					matrices[i].CalcFinalScore(averG)
+				}
+			}(b)
 		}
 		wg.Wait()
 		if err != nil {

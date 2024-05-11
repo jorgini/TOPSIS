@@ -8,16 +8,19 @@ import (
 	v "webApp/lib/variables"
 )
 
-func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
+func (tm *TopsisMatrix) FindIdeals(variants v.Variants, g int) error {
 	var err error
 	var wg sync.WaitGroup
+	if g > 1 {
+		g /= 2
+	}
 
 	wg.Add(2)
 	if tm.Data[0].Grade[0].GetType() == (eval.Interval{}).GetType() && variants == v.Sengupta {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = positiveIdealRateInterval(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdeal(tm.Data, tm.Criteria, eval.Interval{}.GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -26,7 +29,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = negativeIdealRateInterval(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdeal(tm.Data, tm.Criteria, eval.Interval{}.GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -36,7 +39,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = positiveIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
+			tm.PositiveIdeal, inerr = positiveIdeal(tm.Data, tm.Criteria, (&eval.T1FS{}).GetType(), tm.FormFs, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -45,7 +48,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = negativeIdealRateT1FS(tm.Data, tm.Criteria, tm.FormFs)
+			tm.NegativeIdeal, inerr = negativeIdeal(tm.Data, tm.Criteria, (&eval.T1FS{}).GetType(), tm.FormFs, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -54,7 +57,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = positiveIdealRateAIFS(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdeal(tm.Data, tm.Criteria, (&eval.AIFS{}).GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -63,7 +66,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = negativeIdealRateAIFS(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdeal(tm.Data, tm.Criteria, (&eval.AIFS{}).GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -72,7 +75,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.PositiveIdeal, inerr = positiveIdealRateNumber(tm.Data, tm.Criteria)
+			tm.PositiveIdeal, inerr = positiveIdeal(tm.Data, tm.Criteria, eval.NumbersMin.GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -81,7 +84,7 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 		go func() {
 			defer wg.Done()
 			var inerr error
-			tm.NegativeIdeal, inerr = negativeIdealRateNumber(tm.Data, tm.Criteria)
+			tm.NegativeIdeal, inerr = negativeIdeal(tm.Data, tm.Criteria, eval.NumbersMin.GetType(), v.None, g)
 			if inerr != nil {
 				err = inerr
 			}
@@ -95,53 +98,66 @@ func (tm *TopsisMatrix) FindIdeals(variants v.Variants) error {
 	return err
 }
 
-func (tm *TopsisMatrix) FindDistanceToIdeals(vt, vi, vn v.Variants) error {
+func (tm *TopsisMatrix) FindDistanceToIdeals(vt, vi, vn v.Variants, g int) error {
 	var wg sync.WaitGroup
 	var err error
-	wg.Add(tm.CountAlternatives)
-	for i := 0; i < tm.CountAlternatives; i++ {
-		go func(i int) {
+	if g > tm.CountAlternatives {
+		g = tm.CountAlternatives
+	}
+	off := tm.CountAlternatives / g
+	wg.Add(g)
+	for b := 0; b < g; b++ {
+		go func(b int) {
 			defer wg.Done()
 
-			var inerr error
-			if (tm.HighType != (&eval.T1FS{}).GetType() && tm.HighType != (&eval.IT2FS{}).GetType() &&
-				tm.HighType != (&eval.AIFS{}).GetType()) || vt == v.AlphaSlices {
-				if vi == v.Default {
-					if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].NumberMetric(tm.PositiveIdeal, vn); inerr != nil {
-						err = inerr
-						return
-					}
+			start := b * off
+			end := (b + 1) * off
+			if b == g-1 {
+				end = tm.CountAlternatives
+			}
 
-					if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].NumberMetric(tm.NegativeIdeal, vn); inerr != nil {
-						err = inerr
-						return
-					}
-				} else if vi == v.Sengupta {
-					if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].IntervalMetric(tm.PositiveIdeal, tm.Criteria, vn); inerr != nil {
-						err = inerr
-						return
-					}
-					if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].IntervalMetric(tm.NegativeIdeal,
-						matrix.ChangeTypes(tm.Criteria), vn); inerr != nil {
-						err = inerr
+			var inerr error
+
+			for i := start; i < end; i++ {
+				if (tm.HighType != (&eval.T1FS{}).GetType() && tm.HighType != (&eval.IT2FS{}).GetType() &&
+					tm.HighType != (&eval.AIFS{}).GetType()) || vt == v.AlphaSlices {
+					if vi == v.Default {
+						if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].NumberMetric(tm.PositiveIdeal, vn); inerr != nil {
+							err = inerr
+							return
+						}
+
+						if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].NumberMetric(tm.NegativeIdeal, vn); inerr != nil {
+							err = inerr
+							return
+						}
+					} else if vi == v.Sengupta {
+						if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].IntervalMetric(tm.PositiveIdeal, tm.Criteria, vn); inerr != nil {
+							err = inerr
+							return
+						}
+						if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].IntervalMetric(tm.NegativeIdeal,
+							matrix.ChangeTypes(tm.Criteria), vn); inerr != nil {
+							err = inerr
+							return
+						}
+					} else {
+						err = v.InvalidCaseOfOperation
 						return
 					}
 				} else {
-					err = v.InvalidCaseOfOperation
-					return
-				}
-			} else {
-				if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].FSMetric(tm.PositiveIdeal, vn); inerr != nil {
-					err = inerr
-					return
-				}
+					if tm.DistancesToPositive[i].Evaluated, inerr = tm.Data[i].FSMetric(tm.PositiveIdeal, vn); inerr != nil {
+						err = inerr
+						return
+					}
 
-				if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].FSMetric(tm.NegativeIdeal, vn); inerr != nil {
-					err = inerr
-					return
+					if tm.DistancesToNegative[i].Evaluated, inerr = tm.Data[i].FSMetric(tm.NegativeIdeal, vn); inerr != nil {
+						err = inerr
+						return
+					}
 				}
 			}
-		}(i)
+		}(b)
 	}
 	wg.Wait()
 
@@ -151,23 +167,35 @@ func (tm *TopsisMatrix) FindDistanceToIdeals(vt, vi, vn v.Variants) error {
 	return err
 }
 
-func (tm *TopsisMatrix) CalcCloseness() {
+func (tm *TopsisMatrix) CalcCloseness(g int) {
 	var wg sync.WaitGroup
-
-	wg.Add(tm.CountAlternatives)
-	for i := 0; i < tm.CountAlternatives; i++ {
-		go func(i int) {
+	if g > tm.CountAlternatives {
+		g = tm.CountAlternatives
+	}
+	off := tm.CountAlternatives / g
+	wg.Add(g)
+	for b := 0; b < g; b++ {
+		go func(b int) {
 			defer wg.Done()
-			if tm.DistancesToPositive[i].GetType() == (eval.Interval{}).GetType() {
-				neg := tm.DistancesToNegative[i].ConvertToInterval()
-				pos := tm.DistancesToPositive[i].ConvertToInterval()
-				tm.RelativeCloseness[i].Evaluated = eval.Interval{Start: neg.Start / (neg.End + pos.End),
-					End: neg.End / (neg.Start + pos.Start)}
-			} else {
-				tm.RelativeCloseness[i].Evaluated = tm.DistancesToNegative[i].ConvertToNumber() /
-					(tm.DistancesToNegative[i].ConvertToNumber() + tm.DistancesToPositive[i].ConvertToNumber())
+
+			start := b * off
+			end := (b + 1) * off
+			if b == g-1 {
+				end = tm.CountAlternatives
 			}
-		}(i)
+
+			for i := start; i < end; i++ {
+				if tm.DistancesToPositive[i].GetType() == (eval.Interval{}).GetType() {
+					neg := tm.DistancesToNegative[i].ConvertToInterval()
+					pos := tm.DistancesToPositive[i].ConvertToInterval()
+					tm.RelativeCloseness[i].Evaluated = eval.Interval{Start: neg.Start / (neg.End + pos.End),
+						End: neg.End / (neg.Start + pos.Start)}
+				} else {
+					tm.RelativeCloseness[i].Evaluated = tm.DistancesToNegative[i].ConvertToNumber() /
+						(tm.DistancesToNegative[i].ConvertToNumber() + tm.DistancesToPositive[i].ConvertToNumber())
+				}
+			}
+		}(b)
 	}
 	wg.Wait()
 	tm.ClosenessFind = true

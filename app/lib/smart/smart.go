@@ -8,14 +8,27 @@ import (
 	v "webApp/lib/variables"
 )
 
-func (sm *SmartMatrix) CalcFinalScore() {
+func (sm *SmartMatrix) CalcFinalScore(g int) {
 	var wg sync.WaitGroup
-	wg.Add(len(sm.Data))
-	for i := range sm.Data {
-		go func(i int) {
+	if g > sm.CountAlternatives {
+		g = sm.CountAlternatives
+	}
+	off := sm.CountAlternatives / g
+	wg.Add(g)
+	for b := 0; b < g; b++ {
+		go func(b int) {
 			defer wg.Done()
-			sm.FinalScores[i] = sm.Data[i].Sum()
-		}(i)
+
+			start := b * off
+			end := (b + 1) * off
+			if b == g-1 {
+				end = sm.CountAlternatives
+			}
+
+			for i := start; i < end; i++ {
+				sm.FinalScores[i] = sm.Data[i].Sum()
+			}
+		}(b)
 	}
 	wg.Wait()
 }

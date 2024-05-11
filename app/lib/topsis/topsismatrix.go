@@ -8,14 +8,14 @@ import (
 
 type TopsisMatrix struct {
 	*matrix.Matrix
-	PositiveIdeal       *matrix.Alternative `json:"pos_ideal"`
-	NegativeIdeal       *matrix.Alternative `json:"neg_ideal"`
-	IdealsFind          bool                `json:"is_ideal_find"`
-	DistancesToPositive []eval.Rating       `json:"dist_to_pos"`
-	DistancesToNegative []eval.Rating       `json:"dist_to_neg"`
-	DistancesFind       bool                `json:"is_dist_find"`
-	RelativeCloseness   []eval.Rating       `json:"relate_close"`
-	ClosenessFind       bool                `json:"is_close_find"`
+	PositiveIdeal       matrix.Alternative `json:"pos_ideal"`
+	NegativeIdeal       matrix.Alternative `json:"neg_ideal"`
+	IdealsFind          bool               `json:"is_ideal_find"`
+	DistancesToPositive []eval.Rating      `json:"dist_to_pos"`
+	DistancesToNegative []eval.Rating      `json:"dist_to_neg"`
+	DistancesFind       bool               `json:"is_dist_find"`
+	RelativeCloseness   []eval.Rating      `json:"relate_close"`
+	ClosenessFind       bool               `json:"is_close_find"`
 }
 
 func NewTopsisMatrix(x, y int) *TopsisMatrix {

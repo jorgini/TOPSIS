@@ -134,28 +134,22 @@ func (m *Matrix) SetCriterion(Weight eval.Evaluated, typeOf bool, i int) error {
 }
 
 func (m *Matrix) castToType(t string, f v.Variants) {
-	var wg sync.WaitGroup
-	wg.Add(len(m.Data))
 	for i := range m.Data {
-		go func(i int) {
-			defer wg.Done()
-			for j := range m.Data[i].Grade {
-				if t == (&eval.IT2FS{}).GetType() {
-					m.Data[i].Grade[j].Evaluated = m.Data[i].Grade[j].ConvertToIT2FS(f)
-				} else if t == (&eval.AIFS{}).GetType() {
-					m.Data[i].Grade[j].Evaluated = m.Data[i].Grade[j].ConvertToAIFS(f)
-				} else if t == (&eval.T1FS{}).GetType() {
-					m.Data[i].Grade[j].Evaluated = m.Data[i].Grade[j].ConvertToT1FS(f)
-				} else if t == (eval.Interval{}).GetType() {
-					m.Data[i].Grade[j].Evaluated = m.Data[i].Grade[j].ConvertToInterval()
-				}
+		for c := range m.Data[i].Grade {
+			if t == (&eval.IT2FS{}).GetType() {
+				m.Data[i].Grade[c].Evaluated = m.Data[i].Grade[c].ConvertToIT2FS(f)
+			} else if t == (&eval.AIFS{}).GetType() {
+				m.Data[i].Grade[c].Evaluated = m.Data[i].Grade[c].ConvertToAIFS(f)
+			} else if t == (&eval.T1FS{}).GetType() {
+				m.Data[i].Grade[c].Evaluated = m.Data[i].Grade[c].ConvertToT1FS(f)
+			} else if t == (eval.Interval{}).GetType() {
+				m.Data[i].Grade[c].Evaluated = m.Data[i].Grade[c].ConvertToInterval()
 			}
-		}(i)
+		}
 	}
-	wg.Wait()
 }
 
-func TypingMatrices(matrices ...Matrix) error {
+func TypingMatrices(g int, matrices ...Matrix) error {
 	x, y := matrices[0].CountAlternatives, matrices[0].CountCriteria
 	var highestType string
 	var highestForm v.Variants
@@ -173,12 +167,26 @@ func TypingMatrices(matrices ...Matrix) error {
 		}
 	}
 
-	wg.Add(len(matrices))
-	for k := range matrices {
-		go func(k int) {
+	if g > len(matrices) {
+		g = len(matrices)
+	}
+	off := len(matrices) / g
+
+	wg.Add(g)
+	for b := 0; b < g; b++ {
+		go func(b int) {
 			defer wg.Done()
-			matrices[k].castToType(highestType, highestForm)
-		}(k)
+
+			start := b * off
+			end := (b + 1) * off
+			if b == g-1 {
+				end = len(matrices)
+			}
+
+			for k := start; k < end; k++ {
+				matrices[k].castToType(highestType, highestForm)
+			}
+		}(b)
 	}
 	wg.Wait()
 
@@ -189,14 +197,23 @@ func TypingMatrices(matrices ...Matrix) error {
 	}
 
 	if weightType == (eval.Interval{}).GetType() {
-		wg.Add(len(matrices))
-		for k := range matrices {
-			go func(k int) {
+		wg.Add(g)
+		for b := 0; b < g; b++ {
+			go func(b int) {
 				defer wg.Done()
-				for i := range matrices[k].Criteria {
-					matrices[k].Criteria[i].Weight.Evaluated = matrices[k].Criteria[i].Weight.ConvertToInterval()
+
+				start := b * off
+				end := (b + 1) * off
+				if b == g-1 {
+					end = len(matrices)
 				}
-			}(k)
+
+				for k := start; k < end; k++ {
+					for i := range matrices[k].Criteria {
+						matrices[k].Criteria[i].Weight.Evaluated = matrices[k].Criteria[i].Weight.ConvertToInterval()
+					}
+				}
+			}(b)
 		}
 		wg.Wait()
 	}
@@ -204,29 +221,42 @@ func TypingMatrices(matrices ...Matrix) error {
 	return nil
 }
 
-func AggregateRatings(matrices []Matrix, weights []eval.Evaluated) (*Matrix, error) {
+func AggregateRatings(matrices []Matrix, weights []eval.Evaluated, g int) (*Matrix, error) {
 	result := NewMatrix(matrices[0].CountAlternatives, matrices[0].CountCriteria)
-	if err := TypingMatrices(matrices...); err != nil {
+	if err := TypingMatrices(g, matrices...); err != nil {
 		return nil, err
 	}
 
 	var wg sync.WaitGroup
+	if g > len(result.Data) {
+		g = len(result.Data)
+	}
+	off := len(result.Data) / g
 
-	wg.Add(len(result.Data))
-	for i := range result.Data {
-		go func(i int) {
+	wg.Add(g)
+	for b := 0; b < g; b++ {
+		go func(b int) {
 			defer wg.Done()
-			for j := range result.Data[i].Grade {
-				for k := range matrices {
-					if result.Data[i].Grade[j].IsNil() {
-						_ = result.SetValue(matrices[k].Data[i].Grade[j].Weighted(weights[k]), i, j)
-					} else {
-						_ = result.SetValue(result.Data[i].Grade[j].Sum(matrices[k].Data[i].Grade[j].Weighted(weights[k])),
-							i, j)
+
+			start := b * off
+			end := (b + 1) * off
+			if b == g-1 {
+				end = len(result.Data)
+			}
+
+			for i := start; i < end; i++ {
+				for j := range result.Data[i].Grade {
+					for k := range matrices {
+						if result.Data[i].Grade[j].IsNil() {
+							_ = result.SetValue(matrices[k].Data[i].Grade[j].Weighted(weights[k]), i, j)
+						} else {
+							_ = result.SetValue(result.Data[i].Grade[j].Sum(matrices[k].Data[i].Grade[j].Weighted(weights[k])),
+								i, j)
+						}
 					}
 				}
 			}
-		}(i)
+		}(b)
 	}
 	wg.Wait()
 

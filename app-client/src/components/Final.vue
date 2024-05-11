@@ -69,6 +69,7 @@
         modal.close();
       },
       defaultWeights() {
+        // todo skip if set already  
         if (this.role === 'maintainer') {
           this.$store.dispatch('setExpertsWeights', {sid: this.task.sid, weights: []});
           if (this.$store.getters['errorOccurred']) {
@@ -163,8 +164,18 @@
         }
 
         this.weights = new Array(this.experts.length).fill(1.0);
-        this.weightType = new Array((this.experts.length)).fill('Число');
+        this.weightType = new Array(this.experts.length).fill('Число');
         this.curType = new Array(this.experts.length).fill('Число');
+        if ('weight' in this.experts[0]) {
+          for (let k = 0; k < this.experts.length; k++) {
+            this.weights[k] = this.experts[k].weight;
+            if (typeof this.experts[k].weight !== 'number') {
+              this.weightType[k] = 'Интервал';
+              this.curType[k] = 'Интервал';
+            }
+          }
+        }
+
         this.isValidWeight = new Array(this.experts.length).fill(true);
 
         this.role = await this.$store.dispatch('getRole', this.task.sid);
@@ -207,8 +218,8 @@
       <div class="exp" v-for="(_, i) in experts">
         <p>{{ experts[i].login }}</p>
         <p>{{ experts[i].status === true ? 'Завершено' : 'Черновик' }}</p>
-        <div v-if="role==='maintainer' && task.task_type==='group'" class="weight" @change="changeWeightType(i)">
-          <select v-model="weightType[i]">
+        <div v-if="role==='maintainer' && task.task_type==='group'" class="weight">
+          <select v-model="weightType[i]" @change="changeWeightType(i)">
             <option>Число</option>
             <option>Интервал</option>
           </select>

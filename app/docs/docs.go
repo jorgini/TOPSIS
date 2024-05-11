@@ -274,82 +274,10 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "sets alternatives to current task",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "alternatives"
-                ],
-                "summary": "SetAlternatives",
-                "operationId": "set-alts",
-                "parameters": [
-                    {
-                        "description": "alternatives info",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entity.AlternativeModel"
-                            }
-                        }
-                    },
-                    {
-                        "type": "integer",
-                        "description": "task identifier",
-                        "name": "sid",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    }
-                }
             }
         },
         "/solution/connect": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -535,14 +463,16 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
+            }
+        },
+        "/solution/defaults": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "sets criteria to current task",
+                "description": "get defaults linguistic scales",
                 "consumes": [
                     "application/json"
                 ],
@@ -550,60 +480,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "criteria"
+                    "task"
                 ],
-                "summary": "SetCriteria",
-                "operationId": "set-criteria",
-                "parameters": [
-                    {
-                        "description": "criteria info",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entity.CriterionModel"
-                            }
-                        }
-                    },
-                    {
-                        "type": "integer",
-                        "description": "task identifier",
-                        "name": "sid",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
+                "summary": "GetDefaultLingScale",
+                "operationId": "get-default-scales",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/eval.LinguisticScale"
+                            }
                         }
                     }
                 }
@@ -720,6 +608,62 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    }
+                }
+            }
+        },
+        "/solution/experts/role": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "gets a role of user for current task",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "task"
+                ],
+                "summary": "GetRole",
+                "operationId": "get-task-password",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "task identifier",
+                        "name": "sid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/controller.response"
                         }
@@ -1075,12 +1019,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/controller.TaskInput"
                         }
                     },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/controller.response"
-                        }
-                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -1184,12 +1122,12 @@ const docTemplate = `{
                 "operationId": "create-task",
                 "parameters": [
                     {
-                        "description": "task options",
+                        "description": "task title",
                         "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.TaskInput"
+                            "$ref": "#/definitions/controller.TitleInput"
                         }
                     }
                 ],
@@ -1387,6 +1325,45 @@ const docTemplate = `{
             }
         },
         "/user/settings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "gets user account info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "GetUser",
+                "operationId": "get-user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.UserModel"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controller.response"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -1451,7 +1428,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.UserInput"
+                            "$ref": "#/definitions/controller.UserUpdateInfo"
                         }
                     }
                 ],
@@ -1586,6 +1563,9 @@ const docTemplate = `{
                 "method": {
                     "type": "string"
                 },
+                "sid": {
+                    "type": "integer"
+                },
                 "task_type": {
                     "type": "string"
                 },
@@ -1602,7 +1582,29 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.TitleInput": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.UserInput": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserUpdateInfo": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1660,6 +1662,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "boolean"
+                },
+                "weight": {
+                    "$ref": "#/definitions/eval.Rating"
                 }
             }
         },
@@ -1673,10 +1678,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "result": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/eval.Rating"
-                    }
+                    "$ref": "#/definitions/matrix.RankedList"
                 },
                 "sens_analysis": {
                     "$ref": "#/definitions/lib.SensitivityResult"
@@ -1697,6 +1699,9 @@ const docTemplate = `{
                 },
                 "method": {
                     "type": "string"
+                },
+                "sid": {
+                    "type": "integer"
                 },
                 "status": {
                     "type": "boolean"
@@ -1755,14 +1760,28 @@ const docTemplate = `{
                 "results": {
                     "type": "array",
                     "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/eval.Rating"
-                        }
+                        "$ref": "#/definitions/matrix.RankedList"
                     }
                 },
                 "threshold": {
                     "type": "number"
+                }
+            }
+        },
+        "matrix.RankedList": {
+            "type": "object",
+            "properties": {
+                "coeffs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/eval.Rating"
+                    }
+                },
+                "order": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         }

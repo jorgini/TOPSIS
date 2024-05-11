@@ -11,17 +11,17 @@ import (
 )
 
 func SmartCalculating(smartMatrix *SmartMatrix, normValue, NormWeights v.Variants) ([]eval.Rating, error) {
-	if err := matrix.TypingMatrices(*smartMatrix.Matrix); err != nil {
+	if err := matrix.TypingMatrices(5, *smartMatrix.Matrix); err != nil {
 		return nil, err
 	}
 
-	if err := smartMatrix.Normalization(normValue, NormWeights); err != nil {
+	if err := smartMatrix.Normalization(normValue, NormWeights, 5); err != nil {
 		return nil, err
 	}
 
-	smartMatrix.CalcWeightedMatrix()
+	smartMatrix.CalcWeightedMatrix(3)
 
-	smartMatrix.CalcFinalScore()
+	smartMatrix.CalcFinalScore(5)
 
 	return smartMatrix.GetScores(), nil
 }

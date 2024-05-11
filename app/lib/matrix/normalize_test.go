@@ -30,12 +30,12 @@ func TestEmptyValues(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	err = TypingMatrices(*m)
+	err = TypingMatrices(5, *m)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	err = m.Normalization(v.NormalizeWithSum, v.NormalizeWithSum)
+	err = m.Normalization(v.NormalizeWithSum, v.NormalizeWithSum, 5)
 
 	assert.Equal(t, v.EmptyValues, err)
 }
@@ -62,12 +62,12 @@ func TestEmptyWeights(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	err = TypingMatrices(*m)
+	err = TypingMatrices(5, *m)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
-	err = m.Normalization(v.NormalizeWithSum, v.NormalizeWithSum)
+	err = m.Normalization(v.NormalizeWithSum, v.NormalizeWithSum, 5)
 
 	assert.Equal(t, v.EmptyValues, err)
 }

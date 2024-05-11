@@ -29,6 +29,8 @@ definitions:
         $ref: '#/definitions/eval.LinguisticScale'
       method:
         type: string
+      sid:
+        type: integer
       task_type:
         type: string
       title:
@@ -39,7 +41,21 @@ definitions:
       threshold:
         type: number
     type: object
+  controller.TitleInput:
+    properties:
+      title:
+        type: string
+    type: object
   controller.UserInput:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  controller.UserUpdateInfo:
     properties:
       email:
         type: string
@@ -77,6 +93,8 @@ definitions:
         type: string
       status:
         type: boolean
+      weight:
+        $ref: '#/definitions/eval.Rating'
     type: object
   entity.FinalModel:
     properties:
@@ -85,9 +103,7 @@ definitions:
       last_change:
         type: string
       result:
-        items:
-          $ref: '#/definitions/eval.Rating'
-        type: array
+        $ref: '#/definitions/matrix.RankedList'
       sens_analysis:
         $ref: '#/definitions/lib.SensitivityResult'
       threshold:
@@ -101,6 +117,8 @@ definitions:
         type: string
       method:
         type: string
+      sid:
+        type: integer
       status:
         type: boolean
       taskType:
@@ -138,12 +156,21 @@ definitions:
     properties:
       results:
         items:
-          items:
-            $ref: '#/definitions/eval.Rating'
-          type: array
+          $ref: '#/definitions/matrix.RankedList'
         type: array
       threshold:
         type: number
+    type: object
+  matrix.RankedList:
+    properties:
+      coeffs:
+        items:
+          $ref: '#/definitions/eval.Rating'
+        type: array
+      order:
+        items:
+          type: integer
+        type: array
     type: object
 host: localhost:3030
 info:
@@ -275,53 +302,6 @@ paths:
       summary: GetAlternatives
       tags:
       - alternatives
-    post:
-      consumes:
-      - application/json
-      description: sets alternatives to current task
-      operationId: set-alts
-      parameters:
-      - description: alternatives info
-        in: body
-        name: input
-        required: true
-        schema:
-          items:
-            $ref: '#/definitions/entity.AlternativeModel'
-          type: array
-      - description: task identifier
-        in: query
-        name: sid
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controller.response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/controller.response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/controller.response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/controller.response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/controller.response'
-      security:
-      - ApiKeyAuth: []
-      summary: SetAlternatives
-      tags:
-      - alternatives
     put:
       consumes:
       - application/json
@@ -370,7 +350,7 @@ paths:
       tags:
       - alternatives
   /solution/connect:
-    get:
+    post:
       consumes:
       - application/json
       description: connects new user to current task
@@ -444,53 +424,6 @@ paths:
       summary: GetCriteria
       tags:
       - criteria
-    post:
-      consumes:
-      - application/json
-      description: sets criteria to current task
-      operationId: set-criteria
-      parameters:
-      - description: criteria info
-        in: body
-        name: input
-        required: true
-        schema:
-          items:
-            $ref: '#/definitions/entity.CriterionModel'
-          type: array
-      - description: task identifier
-        in: query
-        name: sid
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/controller.response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/controller.response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/controller.response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/controller.response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/controller.response'
-      security:
-      - ApiKeyAuth: []
-      summary: SetCriteria
-      tags:
-      - criteria
     put:
       consumes:
       - application/json
@@ -538,6 +471,26 @@ paths:
       summary: ReplaceCriteria
       tags:
       - criteria
+  /solution/defaults:
+    get:
+      consumes:
+      - application/json
+      description: get defaults linguistic scales
+      operationId: get-default-scales
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/eval.LinguisticScale'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: GetDefaultLingScale
+      tags:
+      - task
   /solution/experts:
     get:
       consumes:
@@ -624,6 +577,42 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: SetExpertsWeights
+      tags:
+      - task
+  /solution/experts/role:
+    get:
+      consumes:
+      - application/json
+      description: gets a role of user for current task
+      operationId: get-task-password
+      parameters:
+      - description: task identifier
+        in: query
+        name: sid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controller.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetRole
       tags:
       - task
   /solution/final:
@@ -836,10 +825,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controller.TaskInput'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/controller.response'
         "404":
           description: Not Found
           schema:
@@ -859,12 +844,12 @@ paths:
       description: creates new task with required options
       operationId: create-task
       parameters:
-      - description: task options
+      - description: task title
         in: body
         name: input
         required: true
         schema:
-          $ref: '#/definitions/controller.TaskInput'
+          $ref: '#/definitions/controller.TitleInput'
       produces:
       - application/json
       responses:
@@ -1067,6 +1052,31 @@ paths:
       summary: DeleteUser
       tags:
       - user
+    get:
+      consumes:
+      - application/json
+      description: gets user account info
+      operationId: get-user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.UserModel'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controller.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetUser
+      tags:
+      - user
     patch:
       consumes:
       - application/json
@@ -1078,7 +1088,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/controller.UserInput'
+          $ref: '#/definitions/controller.UserUpdateInfo'
       produces:
       - application/json
       responses:

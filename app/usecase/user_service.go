@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"webApp/entity"
+	"webApp/lib/eval"
 	"webApp/repository"
 )
 
@@ -14,12 +15,14 @@ var (
 
 type UserService struct {
 	repo       repository.User
+	taskRepo   repository.Task
 	matrixRepo repository.Matrix
 }
 
-func NewUserService(repo repository.User, matrix repository.Matrix) *UserService {
+func NewUserService(repo repository.User, task repository.Task, matrix repository.Matrix) *UserService {
 	return &UserService{
 		repo:       repo,
+		taskRepo:   task,
 		matrixRepo: matrix,
 	}
 }
@@ -48,6 +51,11 @@ func (u *UserService) GetUsersRelateToTask(ctx context.Context, sid int64) ([]en
 		return nil, err
 	}
 
+	task, err := u.taskRepo.GetTask(ctx, sid)
+	if err != nil {
+		return nil, err
+	}
+
 	experts := make([]entity.Expert, len(uids))
 	for i := range experts {
 		tmp, err := u.repo.GetUserByUID(ctx, uids[i].UID)
@@ -56,6 +64,13 @@ func (u *UserService) GetUsersRelateToTask(ctx context.Context, sid int64) ([]en
 		}
 		experts[i].Login = tmp.Login
 		experts[i].Status = uids[i].Status
+		if task.ExpertsWeights != nil {
+			if i >= len(task.ExpertsWeights) {
+				experts[i].Weight = eval.Rating{eval.Number(0.0)}
+			} else {
+				experts[i].Weight = task.ExpertsWeights[i]
+			}
+		}
 	}
 	return experts, nil
 }

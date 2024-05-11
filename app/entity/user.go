@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"errors"
+	"webApp/lib/eval"
 )
 
 type UserModel struct {
@@ -35,8 +36,9 @@ func (u *UserModel) UnmarshalJSON(data []byte) error {
 }
 
 type Expert struct {
-	Login  string `json:"login"`
-	Status bool   `json:"status"`
+	Login  string      `json:"login"`
+	Status bool        `json:"status"`
+	Weight eval.Rating `json:"weight,omitempty"`
 }
 
 type ExpertStatus struct {

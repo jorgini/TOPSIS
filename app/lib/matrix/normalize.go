@@ -138,45 +138,67 @@ func (m *Matrix) getSumForCriterion(j int) eval.Number {
 	return sum
 }
 
-func (m *Matrix) normalizationValue(variants v.Variants) error {
+func (m *Matrix) normalizationValue(variants v.Variants, g int) error {
 	var wg sync.WaitGroup
 	var err error = nil
+	if g > m.CountCriteria {
+		g = m.CountCriteria
+	}
+	off := m.CountCriteria / g
 
 	if variants == v.NormalizeWithSum {
-		wg.Add(m.CountCriteria)
-		for j := range m.Criteria {
+		wg.Add(g)
+		for j := 0; j < g; j++ {
 			go func(j int) {
 				defer wg.Done()
 
-				sum := m.getSumForCriterion(j)
-
-				if sum == 0.0 {
-					err = v.EmptyValues
-					return
+				start := j * off
+				end := (j + 1) * off
+				if j == g-1 {
+					end = m.CountCriteria
 				}
 
-				for i := range m.Data {
-					m.Data[i].Grade[j] = m.Data[i].Grade[j].Weighted(1 / sum)
+				for c := start; c < end; c++ {
+					sum := m.getSumForCriterion(c)
+
+					if sum == 0.0 {
+						err = v.EmptyValues
+						return
+					}
+
+					for i := range m.Data {
+						m.Data[i].Grade[c] = m.Data[i].Grade[c].Weighted(1 / sum)
+					}
 				}
 			}(j)
 		}
 		wg.Wait()
 	} else if variants == v.NormalizeValueWithMax {
-		wg.Add(m.CountCriteria)
-		for j, c := range m.Criteria {
-			go func(j int, c Criterion) {
+		wg.Add(g)
+		for j := 0; j < g; j++ {
+			go func(j int) {
 				defer wg.Done()
-				minimum, maximum := m.getMinMaxRecord(j)
 
-				if maximum.ConvertToNumber() == 0.0 {
-					err = v.EmptyValues
-					return
+				start := j * off
+				end := (j + 1) * off
+				if j == g-1 {
+					end = m.CountCriteria
 				}
 
-				for i := range m.Data {
-					m.Data[i].Grade[j] = getNormValueByMax(m.Data[i].Grade[j], minimum, maximum, c.TypeOfCriteria)
+				for c := start; c < end; c++ {
+					criterion := m.Criteria[c]
+					minimum, maximum := m.getMinMaxRecord(c)
+
+					if maximum.ConvertToNumber() == 0.0 {
+						err = v.EmptyValues
+						return
+					}
+
+					for i := range m.Data {
+						m.Data[i].Grade[c] = getNormValueByMax(m.Data[i].Grade[c], minimum, maximum, criterion.TypeOfCriteria)
+					}
 				}
-			}(j, c)
+			}(j)
 		}
 
 		wg.Wait()
@@ -215,11 +237,14 @@ func (m *Matrix) normalizationWeights(variants v.Variants) error {
 	return nil
 }
 
-func (m *Matrix) Normalization(values v.Variants, weights v.Variants) error {
+func (m *Matrix) Normalization(values v.Variants, weights v.Variants, g int) error {
 	var wg sync.WaitGroup
 	var err error = nil
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	if g > 1 {
+		g--
+	}
 
 	wg.Add(2)
 	go func() {
@@ -228,7 +253,7 @@ func (m *Matrix) Normalization(values v.Variants, weights v.Variants) error {
 		case <-ctx.Done():
 			return
 		default:
-			if inerr := m.normalizationValue(values); inerr != nil {
+			if inerr := m.normalizationValue(values, g); inerr != nil {
 				cancel()
 				err = inerr
 			}
@@ -252,17 +277,30 @@ func (m *Matrix) Normalization(values v.Variants, weights v.Variants) error {
 	return err
 }
 
-func (m *Matrix) CalcWeightedMatrix() {
+func (m *Matrix) CalcWeightedMatrix(g int) {
 	var wg sync.WaitGroup
-	wg.Add(m.CountCriteria)
-	for j, c := range m.Criteria {
-		go func(j int, c Criterion) {
+	if g > m.CountCriteria {
+		g = m.CountCriteria
+	}
+	off := m.CountCriteria / g
+	wg.Add(g)
+	for j := 0; j < g; j++ {
+		go func(j int) {
 			defer wg.Done()
 
-			for i := 0; i < m.CountAlternatives; i++ {
-				m.Data[i].Grade[j] = m.Data[i].Grade[j].Weighted(c.Weight)
+			start := j * off
+			end := (j + 1) * off
+			if j == g-1 {
+				end = m.CountCriteria
 			}
-		}(j, c)
+
+			for c := start; c < end; c++ {
+				criterion := m.Criteria[c]
+				for i := 0; i < m.CountAlternatives; i++ {
+					m.Data[i].Grade[c] = m.Data[i].Grade[c].Weighted(criterion.Weight)
+				}
+			}
+		}(j)
 	}
 	wg.Wait()
 }

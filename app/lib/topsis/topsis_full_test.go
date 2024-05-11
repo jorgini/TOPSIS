@@ -13,26 +13,26 @@ import (
 
 func TopsisCalculating(topsisMatrix *TopsisMatrix, valueNorm, weightNorm, idelaAlg, fsDist,
 	intDist, numDist v.Variants) ([]eval.Rating, error) {
-	if err := matrix.TypingMatrices(*topsisMatrix.Matrix); err != nil {
+	if err := matrix.TypingMatrices(5, *topsisMatrix.Matrix); err != nil {
 		return nil, err
 	}
 
-	if err := topsisMatrix.Normalization(valueNorm, weightNorm); err != nil {
+	if err := topsisMatrix.Normalization(valueNorm, weightNorm, 5); err != nil {
 		return nil, err
 	}
 
-	topsisMatrix.CalcWeightedMatrix()
+	topsisMatrix.CalcWeightedMatrix(20)
 
-	err := topsisMatrix.FindIdeals(idelaAlg)
+	err := topsisMatrix.FindIdeals(idelaAlg, 5)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := topsisMatrix.FindDistanceToIdeals(fsDist, intDist, numDist); err != nil {
+	if err := topsisMatrix.FindDistanceToIdeals(fsDist, intDist, numDist, 5); err != nil {
 		return nil, err
 	}
 
-	topsisMatrix.CalcCloseness()
+	topsisMatrix.CalcCloseness(5)
 
 	return topsisMatrix.GetCoefs(), nil
 }

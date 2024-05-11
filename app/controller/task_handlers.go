@@ -516,7 +516,7 @@ func (h *Handler) DeactivateStatuses(c *fiber.Ctx) error {
 // @tags task
 // @accept json
 // @produce json
-// @success 200 {object} fiber.Map
+// @success 200 {object} []eval.LinguisticScale
 // @router /solution/defaults [get]
 func (h *Handler) GetDefaultLingScale(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"number": eval.DefaultNumberScale, "interval": eval.DefaultIntervalScale,

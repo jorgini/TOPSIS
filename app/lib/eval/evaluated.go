@@ -27,6 +27,7 @@ type Evaluated interface {
 
 type Rating struct {
 	Evaluated `json:"eval"`
+	//_ [56]byte
 }
 
 func (r *Rating) IsNil() bool {

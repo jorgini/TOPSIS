@@ -60,14 +60,12 @@ func (h *Handler) SetAllRoutes(api fiber.Router) {
 
 		solAlts := solGroup.Group("/alternatives")
 		{
-			solAlts.Post("/", h.SetAlternatives)
 			solAlts.Put("/", h.ReplaceAlternatives)
 			solAlts.Get("/", h.GetAlternatives)
 		}
 
 		solCriteria := solGroup.Group("/criteria")
 		{
-			solCriteria.Post("/", h.SetCriteria)
 			solCriteria.Put("/", h.ReplaceCriteria)
 			solCriteria.Get("/", h.GetCriteria)
 		}
